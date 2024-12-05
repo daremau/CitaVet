@@ -20,7 +20,7 @@ export function RegisterForm() {
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -29,11 +29,25 @@ export function RegisterForm() {
       return
     }
 
-    // Here you would typically send the registration data to your backend
-    console.log("Registration data:", { name, email, username, password, address, phone })
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, username, password, address, phone }),
+      })
 
-    // For now, we'll just simulate a successful registration
-    router.push("/login")
+      if (response.ok) {
+        router.push("/login")
+      } else {
+        const data = await response.json()
+        setError(data.message || 'Error al registrar')
+      }
+    } catch (error) {
+      console.error('Error during registration:', error)
+      setError('Error al registrar. Por favor, inténtelo de nuevo.')
+    }
   }
 
   return (

@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {
   title: "Gestionar Citas | Wonder Pet",
-  description: "Manage your pet appointments",
+  description: "Gestionar Citas",
 }
 
 export default function GestionarCitasPage() {
