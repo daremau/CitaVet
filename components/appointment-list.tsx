@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -26,26 +26,78 @@ type Appointment = {
   service: string
   date: string
   time: string
-  status: "Programada" | "Pendiente" | "Confirmada"
+  status: "Completado" | "Pendiente" | "Confirmada"
 }
 
-const mockAppointments: Appointment[] = [
-  { id: 1, petName: "Max", ownerName: "John Doe", service: "Vacunación", date: "2024-03-15", time: "10:00", status: "Programada" },
-  { id: 2, petName: "Luna", ownerName: "Jane Smith", service: "Chequeo", date: "2024-03-16", time: "11:30", status: "Pendiente" },
-  { id: 3, petName: "Rocky", ownerName: "Mike Johnson", service: "Limpieza Dental", date: "2024-03-17", time: "14:00", status: "Confirmada" },
-  { id: 4, petName: "Bella", ownerName: "Sarah Williams", service: "Vacunación", date: "2024-03-18", time: "09:00", status: "Programada" },
-  { id: 5, petName: "Charlie", ownerName: "Emily Brown", service: "Cirugía", date: "2024-03-19", time: "13:00", status: "Pendiente" },
-]
-
 export function AppointmentList() {
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [filter, setFilter] = useState("")
   const [filterType, setFilterType] = useState("all")
 
-  const handleConfirm = (id: number) => {
-    setAppointments(appointments.map(app => 
-      app.id === id ? { ...app, status: "Confirmada" as const } : app
-    ))
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const userId = localStorage.getItem('userId')
+        const userRole = localStorage.getItem('userRole')
+        const response = await fetch('/api/appointments', {
+          headers: {
+            'user-id': userId || '',
+            'user-role': userRole || '',
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          interface ApiAppointment {
+            IdCita: number;
+            pet: string;
+            ownerName: string;
+            servicio: string;
+            FechaHora: string;
+            Estado: string;
+          }
+
+          const formattedData: Appointment[] = (data as ApiAppointment[]).map((appointment) => ({
+            id: appointment.IdCita,
+            petName: appointment.pet,
+            ownerName: appointment.ownerName,
+            service: appointment.servicio,
+            date: new Date(appointment.FechaHora).toLocaleDateString(),
+            time: new Date(appointment.FechaHora).toLocaleTimeString(),
+            status: appointment.Estado as "Completado" | "Pendiente" | "Confirmada",
+          })).filter(appointment => appointment.status !== "Completado")
+          setAppointments(formattedData)
+        } else {
+          console.error('API Error:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error)
+      }
+    }
+
+    fetchAppointments()
+  }, [])
+
+  const handleConfirm = async (id: number) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': localStorage.getItem('userId') || ''
+        },
+        body: JSON.stringify({ status: 'Confirmada' })
+      })
+  
+      if (response.ok) {
+        setAppointments(appointments.map(app => 
+          app.id === id ? { ...app, status: "Confirmada" as const } : app
+        ))
+      } else {
+        console.error('Error updating appointment:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
   }
 
   const handleReschedule = (id: number) => {
@@ -111,11 +163,12 @@ export function AppointmentList() {
               <TableCell>{appointment.status}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  {appointment.status !== "Confirmada" && (
-                    <Button onClick={() => handleConfirm(appointment.id)} size="sm">
-                      Confirmar
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleConfirm(appointment.id)}
+                    disabled={appointment.status === "Confirmada"}
+                    size="sm">
+                  Confirmar
+                  </Button>
                   <Button onClick={() => handleReschedule(appointment.id)} variant="outline" size="sm">
                     Reprogramar
                   </Button>

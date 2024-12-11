@@ -10,16 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { NewMedicalRecordForm } from "./NuevoRegistroMedico"
 
 type MedicalRecord = {
   id: number
@@ -29,31 +22,28 @@ type MedicalRecord = {
   diagnosis: string
   treatment: string
   medications: string
+  vaccination: {
+    applied: boolean
+    vaccine?: string
+  }
 }
 
 const mockMedicalRecords: MedicalRecord[] = [
-  { id: 1, petName: "Max", ownerName: "John Doe", date: "2024-02-15", diagnosis: "Infección de oído", treatment: "Gotas para oídos recetadas", medications: "Otibiotic" },
-  { id: 2, petName: "Luna", ownerName: "Jane Smith", date: "2024-02-20", diagnosis: "Chequeo anual", treatment: "Vacunas administradas", medications: "None" },
-  { id: 3, petName: "Rocky", ownerName: "Mike Johnson", date: "2024-03-01", diagnosis: "Problemas dentales", treatment: "Limpieza dental programada", medications: "None" },
+  { id: 1, petName: "Max", ownerName: "John Doe", date: "2024-02-15", diagnosis: "Infección de oído", treatment: "Gotas para oídos recetadas", medications: "Otibiotic", vaccination: { applied: true, vaccine: "Rabia" } },
+  { id: 2, petName: "Luna", ownerName: "Jane Smith", date: "2024-02-20", diagnosis: "Chequeo anual", treatment: "Vacunas administradas", medications: "None", vaccination: { applied: true, vaccine: "Parvovirus" } },
+  { id: 3, petName: "Rocky", ownerName: "Mike Johnson", date: "2024-03-01", diagnosis: "Problemas dentales", treatment: "Limpieza dental programada", medications: "None", vaccination: { applied: false } },
 ]
 
 export function PetMedicalHistory() {
   const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(mockMedicalRecords)
   const [filter, setFilter] = useState("")
-  const [selectedPet, setSelectedPet] = useState<MedicalRecord | null>(null)
-  const [newRecord, setNewRecord] = useState({
-    petName: "",
-    ownerName: "",
-    diagnosis: "",
-    treatment: "",
-    medications: "",
-  })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleAddRecord = () => {
+  const handleAddRecord = (newRecord: Omit<MedicalRecord, 'id' | 'date'>) => {
     const newId = Math.max(...medicalRecords.map(record => record.id)) + 1
     const currentDate = new Date().toISOString().split('T')[0]
     setMedicalRecords([...medicalRecords, { id: newId, date: currentDate, ...newRecord }])
-    setNewRecord({ petName: "", ownerName: "", diagnosis: "", treatment: "", medications: "" })
+    setIsDialogOpen(false)
   }
 
   const filteredRecords = medicalRecords.filter(record =>
@@ -63,14 +53,14 @@ export function PetMedicalHistory() {
 
   return (
     <div className="space-y-4">
-      <div className="flex space-x-2">
+      <div className="flex justify-between items-center">
         <Input
           placeholder="Buscar por nombre de mascota o dueño..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>Agregar Nuevo Registro</Button>
           </DialogTrigger>
@@ -78,34 +68,7 @@ export function PetMedicalHistory() {
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Registro Médico</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                placeholder="Nombre de la Mascota"
-                value={newRecord.petName}
-                onChange={(e) => setNewRecord({...newRecord, petName: e.target.value})}
-              />
-              <Input
-                placeholder="Nombre del Dueño"
-                value={newRecord.ownerName}
-                onChange={(e) => setNewRecord({...newRecord, ownerName: e.target.value})}
-              />
-              <Textarea
-                placeholder="Diagnóstico"
-                value={newRecord.diagnosis}
-                onChange={(e) => setNewRecord({...newRecord, diagnosis: e.target.value})}
-              />
-              <Textarea
-                placeholder="Tratamiento"
-                value={newRecord.treatment}
-                onChange={(e) => setNewRecord({...newRecord, treatment: e.target.value})}
-              />
-              <Input
-                placeholder="Medicamentos"
-                value={newRecord.medications}
-                onChange={(e) => setNewRecord({...newRecord, medications: e.target.value})}
-              />
-              <Button onClick={handleAddRecord}>Agregar Registro</Button>
-            </div>
+            <NewMedicalRecordForm onSubmit={handleAddRecord} />
           </DialogContent>
         </Dialog>
       </div>
@@ -118,6 +81,7 @@ export function PetMedicalHistory() {
             <TableHead>Diagnóstico</TableHead>
             <TableHead>Tratamiento</TableHead>
             <TableHead>Medicamentos</TableHead>
+            <TableHead>Vacunación</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -129,6 +93,12 @@ export function PetMedicalHistory() {
               <TableCell>{record.diagnosis}</TableCell>
               <TableCell>{record.treatment}</TableCell>
               <TableCell>{record.medications}</TableCell>
+              <TableCell>
+                {record.vaccination.applied ? 
+                  `Sí - ${record.vaccination.vaccine}` : 
+                  'No'
+                }
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -136,4 +106,3 @@ export function PetMedicalHistory() {
     </div>
   )
 }
-

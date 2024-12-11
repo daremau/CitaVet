@@ -3,24 +3,44 @@ import pool from '../../../lib/db';
 
 export async function GET(request: NextRequest) {
   const userId = request.headers.get('user-id');
+  const userRole = request.headers.get('user-role');
 
   try {
-    const [appointments] = await pool.query(
-      `SELECT c.IdCita, m.Nombre AS pet, s.NombreServicio AS servicio, c.FechaHora, c.Estado
-          FROM citas c
-          JOIN clientes cl ON c.IdCliente = cl.IdCliente
-          JOIN mascotas m ON c.IdMascota = m.IdMascota
-          JOIN servicios s ON c.IdServicio = s.IdServicio
-          WHERE cl.IdUsuario = ?`,
-      [userId]
-    );
+    let query;
+    let params: any[];
 
+    if (userRole === 'Veterinario') {
+      // Query para traer todas las citas si es veterinario
+      query = `
+        SELECT c.IdCita, m.Nombre AS pet, s.NombreServicio AS servicio, 
+               c.FechaHora, c.Estado, cl.Nombre AS ownerName
+        FROM citas c
+        JOIN mascotas m ON c.IdMascota = m.IdMascota
+        JOIN servicios s ON c.IdServicio = s.IdServicio
+        JOIN clientes cl ON c.IdCliente = cl.IdCliente
+        ORDER BY c.FechaHora DESC`;
+      params = [];
+    } else {
+      // Query existente para clientes
+      query = `
+        SELECT c.IdCita, m.Nombre AS pet, s.NombreServicio AS servicio, 
+               c.FechaHora, c.Estado, cl.Nombre AS ownerName
+        FROM citas c
+        JOIN clientes cl ON c.IdCliente = cl.IdCliente
+        JOIN mascotas m ON c.IdMascota = m.IdMascota
+        JOIN servicios s ON c.IdServicio = s.IdServicio
+        WHERE cl.IdUsuario = ?`;
+      params = [userId];
+    }
+
+    const [appointments] = await pool.query(query, params);
     return new Response(JSON.stringify(appointments), { status: 200 });
   } catch (error) {
     console.error('Database error:', error);
     return new Response(JSON.stringify({ message: 'server error' }), { status: 500 });
   }
-} 
+}
+
 export async function POST(request: NextRequest) {
   const userId = request.headers.get('user-id');
   const body = await request.json();

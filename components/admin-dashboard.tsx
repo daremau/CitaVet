@@ -30,21 +30,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PlusCircle, Search, FileText, Edit, Trash2, Package } from 'lucide-react'
+import { PlusCircle, Search, FileText, Edit, Trash2, ArrowUpDown } from 'lucide-react'
 import { Card, CardContent } from "@/components/ui/card"
+import { ServicesManagement } from "./services-management"
+import { CalendarIcon } from 'lucide-react'
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import cn from 'classnames'
+import { VaccinesManagement } from "./vaccines-management"
 
 // Updated mock data to reflect veterinary products
 const mockInventory = [
-  { 
-    id: "V001", 
-    name: "Vacuna Antirrábica", 
-    salePrice: 150000,
-    purchasePrice: 100000,
-    quantity: 50,
-    brand: "VetPharma",
-    discount: 0,
-    description: "Vacuna para prevención de rabia"
-  },
   { 
     id: "M001", 
     name: "Antibiótico General", 
@@ -64,6 +65,26 @@ const mockInventory = [
     brand: "PetCare",
     discount: 0,
     description: "Para tratamiento de problemas de piel"
+  },
+  { 
+    id: "F001", 
+    name: "Alimento Premium para Perros", 
+    salePrice: 120000,
+    purchasePrice: 80000,
+    quantity: 50,
+    brand: "PetNutrition",
+    discount: 5,
+    description: "Alimento balanceado para perros adultos"
+  },
+  { 
+    id: "T001", 
+    name: "Juguete Interactivo", 
+    salePrice: 35000,
+    purchasePrice: 20000,
+    quantity: 40,
+    brand: "PetToy",
+    discount: 0,
+    description: "Juguete para estimulación mental de mascotas"
   },
 ]
 
@@ -152,44 +173,48 @@ type FinancialReport = {
 
 
 export function AdminDashboard() {
-  const [inventory, setInventory] = useState(mockInventory)
+  const [inventory] = useState(mockInventory)
   const [employees, setEmployees] = useState<Employee[]>(mockEmployees)
   const [financialReports, setFinancialReports] = useState<FinancialReport[]>(mockFinancialReports)
-  const [newItem, setNewItem] = useState({ code: "", name: "", salePrice: 0, purchasePrice: 0, quantity: 0, brand: "", discount: 0, description: "" })
+  //const [newItem, setNewItem] = useState({ code: "", name: "", salePrice: 0, purchasePrice: 0, quantity: 0, brand: "", discount: 0, description: "" })
   const [newEmployee, setNewEmployee] = useState({ name: "", role: "", username: "", password: "" })
-  const [inventoryFilter, setInventoryFilter] = useState("")
-  const [inventoryTypeFilter, setInventoryTypeFilter] = useState("all")
-  const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false)
+  //const [inventoryFilter, setInventoryFilter] = useState("")
+  //const [inventoryTypeFilter, setInventoryTypeFilter] = useState("all")
+  //const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false)
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false)
   const [employeeFilter, setEmployeeFilter] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-  const [isModifyProductDialogOpen, setIsModifyProductDialogOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null)
+  const [inventorySortOrder, setInventorySortOrder] = useState<'asc' | 'desc'>('desc')
+  //const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  //const [isModifyProductDialogOpen, setIsModifyProductDialogOpen] = useState(false)
+  //const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null)
+  const [isGenerateReportDialogOpen, setIsGenerateReportDialogOpen] = useState(false)
+  const [startDate, setStartDate] = useState<Date>()
+  const [endDate, setEndDate] = useState<Date>()
 
-  const addInventoryItem = () => {
-    if (!newItem.code || !newItem.name || !newItem.quantity) {
-      alert("Por favor complete todos los campos requeridos")
-      return
-    }
+  //const addInventoryItem = () => {
+  //  if (!newItem.code || !newItem.name || !newItem.quantity) {
+  //    alert("Por favor complete todos los campos requeridos")
+  //    return
+  //  }
 
-    setInventory([...inventory, { 
-      id: newItem.code,
-      ...newItem
-    }])
+  //  setInventory([...inventory, { 
+  //    id: newItem.code,
+  //    ...newItem
+  //  }])
     
-    setNewItem({
-      code: "",
-      name: "",
-      salePrice: 0,
-      purchasePrice: 0,
-      quantity: 0,
-      brand: "",
-      discount: 0,
-      description: ""
-    })
-    setIsAddProductDialogOpen(false)
-  }
+  //  setNewItem({
+  //    code: "",
+  //    name: "",
+  //    salePrice: 0,
+  //    purchasePrice: 0,
+  //    quantity: 0,
+  //    brand: "",
+  //    discount: 0,
+  //    description: ""
+  //  })
+  //  setIsAddProductDialogOpen(false)
+  //}
 
   const addEmployee = () => {
     if (newEmployee.name && newEmployee.role && newEmployee.username && newEmployee.password) {
@@ -200,15 +225,11 @@ export function AdminDashboard() {
   }
 
   const filteredInventory = inventory
-    .filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => 
-      sortOrder === 'desc' 
-        ? b.quantity - a.quantity 
-        : a.quantity - b.quantity
-    )
+  .filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.id.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+  .sort((a, b) => inventorySortOrder === 'asc' ? a.quantity - b.quantity : b.quantity - a.quantity)
 
   const filteredEmployees = employees.filter(employee =>
     employee.name.toLowerCase().includes(employeeFilter.toLowerCase()) ||
@@ -224,30 +245,52 @@ export function AdminDashboard() {
     sum + (item.salePrice * item.quantity), 0
   )
 
-  const modifyProduct = () => {
-    if (!selectedProduct) return
+  //const modifyProduct = () => {
+  //  if (!selectedProduct) return
     
-    setInventory(inventory.map(item => 
-      item.id === selectedProduct.id ? selectedProduct : item
-    ))
-    setIsModifyProductDialogOpen(false)
-    setSelectedProduct(null)
+  //  setInventory(inventory.map(item => 
+  //    item.id === selectedProduct.id ? selectedProduct : item
+  //  ))
+  //  setIsModifyProductDialogOpen(false)
+  //  setSelectedProduct(null)
+  //}
+
+  //const deleteProduct = (id: string) => {
+  //  if (confirm('¿Está seguro que desea eliminar este producto?')) {
+  //    setInventory(inventory.filter(item => item.id !== id))
+  //  }
+  //}
+
+  const deleteEmployee = (id: number) => {
+    if (confirm('¿Está seguro que desea eliminar este empleado?')) {
+      setEmployees(employees.filter(employee => employee.id !== id))
+    }
   }
 
-  const deleteProduct = (id: string) => {
-    if (confirm('¿Está seguro que desea eliminar este producto?')) {
-      setInventory(inventory.filter(item => item.id !== id))
+  const handleGenerateReport = () => {
+    if (startDate && endDate) {
+      console.log(`Generando reporte desde ${format(startDate, 'dd/MM/yyyy')} hasta ${format(endDate, 'dd/MM/yyyy')}`)
+      // Aquí iría la lógica real para generar el reporte
+      setIsGenerateReportDialogOpen(false)
+    } else {
+      alert("Por favor seleccione ambas fechas")
     }
+  }
+
+  const toggleInventorySort = () => {
+    setInventorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
   }
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Panel de Administrador</h1>
       <Tabs defaultValue="inventory" className="w-full">
-        <TabsList>
+        <TabsList className="w-fit">
           <TabsTrigger value="inventory">Inventario</TabsTrigger>
           <TabsTrigger value="employees">Empleados</TabsTrigger>
           <TabsTrigger value="financial">Reportes Financieros</TabsTrigger>
+          <TabsTrigger value="services">Servicios</TabsTrigger>
+          <TabsTrigger value="vaccines">Vacunas</TabsTrigger>
         </TabsList>
         <TabsContent value="inventory">
           <div className="space-y-4">
@@ -260,8 +303,16 @@ export function AdminDashboard() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="flex-1"
                 />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={toggleInventorySort}
+                  className="ml-2"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
               </div>
-              <Dialog open={isAddProductDialogOpen} onOpenChange={setIsAddProductDialogOpen}>
+              {/*<Dialog open={isAddProductDialogOpen} onOpenChange={setIsAddProductDialogOpen}>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Nuevo producto</DialogTitle>
@@ -377,7 +428,7 @@ export function AdminDashboard() {
                     <Button onClick={addInventoryItem}>Guardar</Button>
                   </DialogFooter>
                 </DialogContent>
-              </Dialog>
+              </Dialog>*/}
             </div>
 
             <div className="rounded-lg border">
@@ -388,7 +439,17 @@ export function AdminDashboard() {
                     <TableHead>Nombre</TableHead>
                     <TableHead className="text-right">Precio Venta</TableHead>
                     <TableHead className="text-right">Precio Compra</TableHead>
-                    <TableHead className="text-right">Cantidad</TableHead>
+                    <TableHead className="text-right">
+                      Cantidad
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-2 h-8 w-8 p-0"
+                        onClick={toggleInventorySort}
+                      >
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </TableHead>
                     <TableHead>Marca</TableHead>
                     <TableHead className="text-right">Descuento</TableHead>
                     <TableHead>Descripción</TableHead>
@@ -408,21 +469,10 @@ export function AdminDashboard() {
                       <TableCell className="max-w-[200px] truncate">{item.description}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => {
-                              setSelectedProduct(item)
-                              setIsModifyProductDialogOpen(true)
-                            }}
-                          >
+                          <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => deleteProduct(item.id)}
-                          >
+                          <Button variant="ghost" size="icon">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -433,7 +483,33 @@ export function AdminDashboard() {
               </Table>
             </div>
 
-            <div className="flex justify-end space-x-2 mt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-4">
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold">{totalInventoryValue.toLocaleString()} Gs.</p>
+                  <p className="text-sm text-muted-foreground">Dinero total en inventario (compra)</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-2xl font-bold">{totalInventorySaleValue.toLocaleString()} Gs.</p>
+                  <p className="text-sm text-muted-foreground">Dinero total en inventario (a la venta)</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex items-center gap-2">
+                  <PlusCircle className="h-4 w-4" />
+                  Agregar productos
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Edit className="h-4 w-4" />
+                  Modificar productos
+                </Button>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Generar reporte
+                </Button>
+              </div>
+            </div>
+            {/*<div className="flex justify-end space-x-2 mt-4">
               <Button
                 onClick={() => setIsAddProductDialogOpen(true)}
                 className="flex items-center justify-center space-x-2"
@@ -452,8 +528,8 @@ export function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Buttons removed as per user request */}
-            </div>
+              
+            </div>*/}
           </div>
         </TabsContent>
         <TabsContent value="employees">
@@ -574,10 +650,18 @@ export function AdminDashboard() {
                     <TableCell>{employee.role}</TableCell>
                     <TableCell>{employee.username}</TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="icon">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => deleteEmployee(employee.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -586,63 +670,77 @@ export function AdminDashboard() {
           </div>
         </TabsContent>
         <TabsContent value="financial">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mes</TableHead>
-                <TableHead>Ingresos</TableHead>
-                <TableHead>Gastos</TableHead>
-                <TableHead>Beneficios</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {financialReports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell>{report.month}</TableCell>
-                  <TableCell>{report.revenue.toLocaleString()} Gs.</TableCell>
-                  <TableCell>{report.expenses.toLocaleString()} Gs.</TableCell>
-                  <TableCell>{report.profit.toLocaleString()} Gs.</TableCell>
-                  <TableCell>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline">Ver Detalles</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Detalles Financieros - {report.month}</DialogTitle>
-                          <DialogDescription>
-                            Desglose de ingresos y gastos para {report.month}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Categoría</TableHead>
-                                <TableHead>Monto</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {report.details.map((detail, index) => (
-                                <TableRow key={index}>
-                                  <TableCell>{detail.category}</TableCell>
-                                  <TableCell>{detail.amount.toLocaleString()} Gs.</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </TableCell>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold">Reportes Financieros</h2>
+              <Button onClick={() => setIsGenerateReportDialogOpen(true)}>
+                Generar Reporte
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mes</TableHead>
+                  <TableHead>Ingresos</TableHead>
+                  <TableHead>Gastos</TableHead>
+                  <TableHead>Beneficios</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {financialReports.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell>{report.month}</TableCell>
+                    <TableCell>{report.revenue.toLocaleString()} Gs.</TableCell>
+                    <TableCell>{report.expenses.toLocaleString()} Gs.</TableCell>
+                    <TableCell>{report.profit.toLocaleString()} Gs.</TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">Ver Detalles</Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Detalles Financieros - {report.month}</DialogTitle>
+                            <DialogDescription>
+                              Desglose de ingresos y gastos para {report.month}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="py-4">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Categoría</TableHead>
+                                  <TableHead>Monto</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {report.details.map((detail, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell>{detail.category}</TableCell>
+                                    <TableCell>{detail.amount.toLocaleString()} Gs.</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        <TabsContent value="services">
+          <ServicesManagement />
+        </TabsContent>
+        <TabsContent value="vaccines">
+          <VaccinesManagement />
         </TabsContent>
       </Tabs>
-      <Dialog open={isModifyProductDialogOpen} onOpenChange={setIsModifyProductDialogOpen}>
+      {/*<Dialog open={isModifyProductDialogOpen} onOpenChange={setIsModifyProductDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modificar producto</DialogTitle>
@@ -769,8 +867,77 @@ export function AdminDashboard() {
             <Button onClick={modifyProduct}>Guardar cambios</Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>*/}
+      <Dialog open={isGenerateReportDialogOpen} onOpenChange={setIsGenerateReportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generar Reporte Financiero</DialogTitle>
+            <DialogDescription>
+              Seleccione el rango de fechas para generar el reporte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="startDate" className="text-right">
+                Fecha Inicial
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="startDate"
+                    variant={"outline"}                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "PPP") : <span>Seleccionar fecha</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="endDate" className="text-right">
+                Fecha Final
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="endDate"
+                    variant={"outline"}
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? format(endDate, "PPP") : <span>Seleccionar fecha</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleGenerateReport}>Generar Reporte</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   )
 }
-
