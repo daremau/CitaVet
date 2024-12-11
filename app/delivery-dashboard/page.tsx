@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { DeliveryDashboard } from "@/components/delivery-dashboard"
+import { DeliveryDashboard } from "@/components/PanelRepartidor"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {

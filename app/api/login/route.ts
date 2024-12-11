@@ -3,6 +3,7 @@ import type { RowDataPacket } from 'mysql2';
 import pool from '../../../lib/db';
 
 interface UserRow extends RowDataPacket {
+  IdUsuario: number;
   Contrasena: string;
   Tipo: string;
 }
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     if (rows.length > 0) {
       const user = rows[0];
-      return Response.json({ role: user.Tipo, redirectUrl: '/' });
+      return Response.json({ userId: user.IdUsuario, role: user.Tipo, redirectUrl: '/' });
     } else {
       return Response.json({ message: 'Invalid username or password' }, { status: 401 });
     }

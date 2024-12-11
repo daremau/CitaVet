@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { RegisterForm } from "@/components/register-form"
+import { RegisterForm } from "@/components/RegisterForm"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {

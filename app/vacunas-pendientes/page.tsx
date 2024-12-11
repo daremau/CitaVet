@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { PendingVaccinations } from "@/components/pending-vaccinations"
+import { PendingVaccinations } from "@/components/VacunasPendientes"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {

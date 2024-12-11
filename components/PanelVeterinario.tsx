@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AppointmentList } from "./appointment-list"
-import { PetMedicalHistory } from "./pet-medical-history"
+import { PetMedicalHistory } from "./HistorialMedico"
 
 export function VeterinarianDashboard() {
   const [activeTab, setActiveTab] = useState("appointments")

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { NewPetDialog } from "./new-pet-dialog"
+import { NewPetDialog } from "./NuevaMascota"
 
 type Pet = {
   id: number

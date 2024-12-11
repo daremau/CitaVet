@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { VeterinarianDashboard } from "@/components/veterinarian-dashboard"
+import { VeterinarianDashboard } from "@/components/PanelVeterinario"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {

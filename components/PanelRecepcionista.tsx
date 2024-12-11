@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AppointmentScheduler } from "./appointment-scheduler"
-import { ReceiptGenerator } from "./receipt-generator"
+import { ReceiptGenerator } from "./Facturacion"
 import { useSearchParams } from 'next/navigation'
 
 export function ReceptionistDashboard() {
@@ -22,12 +21,8 @@ export function ReceptionistDashboard() {
       <h1 className="text-2xl font-bold">Panel de Recepcionista</h1>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="appointments">Agendar Citas</TabsTrigger>
           <TabsTrigger value="receipts">Generar Recibos</TabsTrigger>
         </TabsList>
-        <TabsContent value="appointments">
-          <AppointmentScheduler />
-        </TabsContent>
         <TabsContent value="receipts">
           <ReceiptGenerator />
         </TabsContent>

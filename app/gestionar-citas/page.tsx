@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { AppointmentManager } from "@/components/appointment-manager"
+import { GestionCitas } from "@/components/GestionCitas"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export default function GestionarCitasPage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <main className="container mx-auto p-4 md:p-8 space-y-8">
-        <AppointmentManager />
+        <GestionCitas />
       </main>
     </div>
   )

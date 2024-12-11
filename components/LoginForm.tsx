@@ -29,6 +29,7 @@ export function LoginForm() {
         const data = await response.json()
         localStorage.setItem('isLoggedIn', 'true')
         localStorage.setItem('userRole', data.role)
+        localStorage.setItem('userId', data.userId.toString())
         router.push(data.redirectUrl)
       } else {
         setErrorMessage('Usuario o contraseña inválidos')

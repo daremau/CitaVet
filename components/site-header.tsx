@@ -48,10 +48,6 @@ export function SiteHeader() {
               </>
             ) : userRole === 'Recepcionista' ? (
               <>
-                <Link href="/receptionist-dashboard" className="flex items-center gap-1 text-sm hover:opacity-80">
-                  <CalendarIcon className="h-4 w-4" />
-                  Agendar Citas
-                </Link>
                 <Link href="/receptionist-dashboard?tab=receipts" className="flex items-center gap-1 text-sm hover:opacity-80">
                   <FileText className="h-4 w-4" />
                   Generar Recibos

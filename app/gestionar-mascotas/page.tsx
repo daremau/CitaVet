@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { PetManager } from "@/components/pet-manager"
+import { PetManager } from "@/components/GestionMascotas"
 import { SiteHeader } from "@/components/site-header"
 
 export const metadata: Metadata = {
