@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -22,52 +22,64 @@ import { Label } from "@/components/ui/label"
 
 const petTypes = ["Perro", "Gato"]
 
-const dogBreeds = [
-  "Labrador Retriever",
-  "Pastor Alemán",
-  "Golden Retriever",
-  "Bulldog",
-  "Poodle",
-  "Otro",
-]
-
-const catBreeds = [
-  "Siamés",
-  "Persa",
-  "Maine Coon",
-  "Bengalí",
-  "Ragdoll",
-  "Otro",
-]
-
 export function NewPetDialog() {
   const [open, setOpen] = useState(false)
   const [selectedType, setSelectedType] = useState<string>("")
   const [name, setName] = useState("")
   const [breed, setBreed] = useState("")
   const [otherBreed, setOtherBreed] = useState("")
+  const [breeds, setBreeds] = useState<{ id: number, nombre: string }[]>([])
 
-  const getBreedsByType = (type: string) => {
-    switch (type) {
-      case "Perro":
-        return dogBreeds
-      case "Gato":
-        return catBreeds
-      default:
-        return []
+  useEffect(() => {
+    if (selectedType) {
+      fetchBreeds(selectedType)
+    }
+  }, [selectedType])
+
+  const fetchBreeds = async (type: string) => {
+    const endpoint = type === "Perro" ? "/api/razas/perro" : "/api/razas/gato"
+    try {
+      const response = await fetch(endpoint)
+      if (response.ok) {
+        const data = await response.json()
+        setBreeds(data)
+      } else {
+        console.error('API Error:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error fetching breeds:', error)
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const finalBreed = breed === "Otro" ? otherBreed : breed
-    console.log({ name, type: selectedType, breed: finalBreed })
-    setOpen(false)
-    // Reset form
-    setName("")
-    setSelectedType("")
-    setBreed("")
-    setOtherBreed("")
+    const userId = localStorage.getItem('userId')
+
+    try {
+      const response = await fetch('/api/pets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': localStorage.getItem('userId') || '' 
+        },
+        body: JSON.stringify({ name, type: selectedType, breed: finalBreed, userId }),
+      })
+
+      if (response.ok) {
+        console.log('Mascota registrada exitosamente')
+        setOpen(false)
+        // Reset form
+        setName("")
+        setSelectedType("")
+        setBreed("")
+        setOtherBreed("")
+      } else {
+        console.error('Error registrando mascota:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error registrando mascota:', error)
+    }
   }
 
   return (
@@ -129,9 +141,9 @@ export function NewPetDialog() {
                 <SelectValue placeholder="Seleccionar raza" />
               </SelectTrigger>
               <SelectContent>
-                {getBreedsByType(selectedType).map((breedOption) => (
-                  <SelectItem key={breedOption} value={breedOption}>
-                    {breedOption}
+                {breeds.map((breedOption) => (
+                  <SelectItem key={breedOption.id} value={breedOption.nombre}>
+                    {breedOption.nombre}
                   </SelectItem>
                 ))}
               </SelectContent>

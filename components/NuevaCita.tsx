@@ -122,7 +122,6 @@ export function NuevaCita() {
     fetchTimeSlots()
   }, [])
 
-  // Manejar el envío del formulario
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const userId = localStorage.getItem("userId")

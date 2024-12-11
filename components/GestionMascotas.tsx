@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -19,16 +19,51 @@ type Pet = {
   breed: string
 }
 
-const mockPets: Pet[] = [
-  { id: 1, name: "Max", type: "Perro", breed: "Labrador Retriever" },
-  { id: 2, name: "Luna", type: "Gato", breed: "Siamés" },
-  { id: 3, name: "Rocky", type: "Perro", breed: "Pastor Alemán" },
-  { id: 4, name: "Milo", type: "Gato", breed: "Persa" },
-  { id: 5, name: "Bella", type: "Perro", breed: "Golden Retriever" },
-]
-
 export function PetManager() {
-  const [pets, setPets] = useState<Pet[]>(mockPets)
+  const [pets, setPets] = useState<Pet[]>([])
+
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const userId = localStorage.getItem('userId')
+        const response = await fetch('/api/pets', {
+          headers: {
+            'user-id': userId || '',
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setPets(data)
+        } else {
+          console.error('API Error:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Error fetching pets:', error)
+      }
+    }
+
+    fetchPets()
+  }, [])
+
+  const handleDelete = async (petId: number) => {
+    try {
+      const response = await fetch(`/api/pets?id=${petId}`, {
+        method: 'DELETE',
+        headers: {
+          'user-id': localStorage.getItem('userId') || ''
+        }
+      });
+
+      if (response.ok) {
+        const updatedPets = pets.filter((pet) => pet.id !== petId);
+        setPets(updatedPets);
+      } else {
+        console.error('Error al eliminar la mascota');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -58,7 +93,7 @@ export function PetManager() {
                     <Button variant="outline" size="sm">
                       Editar
                     </Button>
-                    <Button variant="destructive" size="sm">
+                    <Button variant="destructive" size="sm" onClick={() => handleDelete(pet.id)}>
                       Eliminar
                     </Button>
                   </div>
