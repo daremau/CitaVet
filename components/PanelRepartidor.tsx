@@ -20,30 +20,66 @@ import {
 import { Phone, TruckIcon, ArrowDownIcon } from 'lucide-react'
 
 type Delivery = {
-  id: number
+  IdTransporte: number
   clientName: string
   clientPhone: string
-  address: string
-  status: "Pendiente" | "En camino" | "Entregado"
-  type: "Entrega" | "Recogida"
+  DireccionRecogida: string
+  DireccionEntrega: string
+  Estado: "Pendiente" | "En camino" | "Entregado"
+  Tipo: "Entrega" | "Recogida"
+  Fecha: string
 }
 
-const mockDeliveries: Delivery[] = [
-  { id: 1, clientName: "Juan Pérez", clientPhone: "0981 123 456", address: "Calle 1, Casa 2, Barrio San Juan", status: "Pendiente", type: "Entrega" },
-  { id: 2, clientName: "María González", clientPhone: "0982 234 567", address: "Avenida Principal 123, Edificio Sol, Apto 4B", status: "En camino", type: "Entrega" },
-  { id: 3, clientName: "Carlos Rodríguez", clientPhone: "0983 345 678", address: "Ruta 1, Km 5, Casa con portón verde", status: "Pendiente", type: "Recogida" },
-  { id: 4, clientName: "Ana Martínez", clientPhone: "0984 456 789", address: "Barrio Vista Alegre, Casa 15", status: "Pendiente", type: "Entrega" },
-  { id: 5, clientName: "Luis Gómez", clientPhone: "0985 567 890", address: "Calle del Sol 789, Edificio Luna, Piso 3", status: "En camino", type: "Recogida" },
-]
-
 export function DeliveryDashboard() {
-  const [deliveries, setDeliveries] = useState<Delivery[]>(mockDeliveries)
+  const [deliveries, setDeliveries] = useState<Delivery[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const updateDeliveryStatus = (id: number, newStatus: Delivery['status']) => {
-    setDeliveries(deliveries.map(delivery => 
-      delivery.id === id ? { ...delivery, status: newStatus } : delivery
-    ))
+  useEffect(() => {
+    const fetchDeliveries = async () => {
+      try {
+        const response = await fetch('/api/transportes')
+        if (!response.ok) {
+          throw new Error('Error al cargar los transportes')
+        }
+        const data = await response.json()
+        setDeliveries(data)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Error desconocido')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDeliveries()
+  }, [])
+
+  const updateDeliveryStatus = async (id: number, newStatus: "Pendiente" | "En camino" | "Entregado") => {
+    try {
+      const response = await fetch('/api/transportes', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status: newStatus })
+      })
+  
+      if (!response.ok) {
+        throw new Error('Error al actualizar estado')
+      }
+  
+      // Update local state
+      setDeliveries(deliveries.map(delivery => 
+        delivery.IdTransporte === id ? { ...delivery, Estado: newStatus } : delivery
+      ))
+  
+    } catch (error) {
+      console.error('Error al actualizar estado:', error)
+    }
   }
+
+  if (isLoading) return <div>Cargando transportes...</div>
+  if (error) return <div>Error: {error}</div>
 
   return (
     <div className="space-y-6">
@@ -51,8 +87,9 @@ export function DeliveryDashboard() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Dirección</TableHead>
+            <TableHead>Fecha</TableHead>
+            <TableHead>Dirección Recogida</TableHead>
+            <TableHead>Dirección Entrega</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Acciones</TableHead>
@@ -60,30 +97,25 @@ export function DeliveryDashboard() {
         </TableHeader>
         <TableBody>
           {deliveries.map((delivery) => (
-            <TableRow key={delivery.id}>
-              <TableCell>
-                <div>{delivery.clientName}</div>
-                <div className="text-sm text-gray-500 flex items-center">
-                  <Phone className="h-4 w-4 mr-1" />
-                  {delivery.clientPhone}
-                </div>
-              </TableCell>
-              <TableCell>{delivery.address}</TableCell>
+            <TableRow key={delivery.IdTransporte}>
+              <TableCell>{new Date(delivery.Fecha).toLocaleDateString()}</TableCell>
+              <TableCell>{delivery.DireccionRecogida}</TableCell>
+              <TableCell>{delivery.DireccionEntrega}</TableCell>
               <TableCell>
                 <div className="flex items-center">
-                  {delivery.type === "Entrega" ? (
+                  {delivery.Tipo === "Entrega" ? (
                     <TruckIcon className="h-4 w-4 mr-2 text-blue-500" />
                   ) : (
                     <ArrowDownIcon className="h-4 w-4 mr-2 text-green-500" />
                   )}
-                  {delivery.type}
+                  {delivery.Tipo}
                 </div>
               </TableCell>
-              <TableCell>{delivery.status}</TableCell>
+              <TableCell>{delivery.Estado}</TableCell>
               <TableCell>
                 <Select
-                  value={delivery.status}
-                  onValueChange={(value) => updateDeliveryStatus(delivery.id, value as Delivery['status'])}
+                  value={delivery.Estado}
+                  onValueChange={(value) => updateDeliveryStatus(delivery.IdTransporte, value as "Pendiente" | "En camino" | "Entregado")}
                 >
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Actualizar estado" />

@@ -18,6 +18,12 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import { CalendarIcon, Clock } from 'lucide-react'
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
 
 interface Appointment {
   id: number;
@@ -57,6 +63,8 @@ export function NuevaCita() {
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTime, setSelectedTime] = useState<string>("")
   const [notes, setNotes] = useState<string>("")
+  const [transportNeeded, setTransportNeeded] = useState(false)
+  const [clientAddress, setClientAddress] = useState<string>("");
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -80,6 +88,29 @@ export function NuevaCita() {
 
     fetchPets()
   }, [])
+
+  useEffect(() => {
+    const fetchClientAddress = async () => {
+      const userId = localStorage.getItem('userId');
+      try {
+        const response = await fetch('/api/cliente', {
+          headers: {
+            'user-id': userId || '',
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.length > 0) {
+            setClientAddress(data[0].Direccion);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching client address:', error);
+      }
+    };
+  
+    fetchClientAddress();
+  }, []);
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -123,38 +154,66 @@ export function NuevaCita() {
   }, [])
 
   const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    const userId = localStorage.getItem("userId")
-
+    event.preventDefault();
+    const userId = localStorage.getItem("userId");
+  
+    // Crear la fecha de transporte (3 horas antes de la cita)
+    const appointmentDateTime = new Date(`${selectedDate}T${selectedTime}`);
+    const transportDateTime = new Date(appointmentDateTime);
+    transportDateTime.setHours(transportDateTime.getHours() - 3);
+  
     const appointmentData = {
       userId,
       petId: selectedPet,
       serviceId: selectedService,
-      dateTime: new Date(`${selectedDate}T${selectedTime}`).toLocaleString('en-US'),
+      dateTime: appointmentDateTime.toLocaleString('en-US'),
       notes,
-    }
-
+      needsTransport: transportNeeded
+    };
+  
     try {
-      const response = await fetch("/api/appointments", {
+      // Crear la cita
+      const appointmentResponse = await fetch("/api/appointments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           'user-id': localStorage.getItem('userId') || '' 
         },
         body: JSON.stringify(appointmentData),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        console.log("Cita creada:", data)
-        setOpen(false)
+      });
+  
+      if (appointmentResponse.ok) {
+        // Si se necesita transporte, crearlo
+        if (transportNeeded) {
+          const transportData = {
+            fecha: transportDateTime.toISOString().split('T')[0],
+            direccionRecogida: clientAddress,
+            direccionEntrega: "Veterinaria",
+            estado: "Pendiente",
+            tipo: "Recogida"
+          };
+  
+          const transportResponse = await fetch("/api/transportes", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(transportData),
+          });
+  
+          if (!transportResponse.ok) {
+            console.error("Error al crear el transporte");
+          }
+        }
+  
+        setOpen(false);
       } else {
-        console.error("Error al guardar la cita")
+        console.error("Error al guardar la cita");
       }
     } catch (error) {
-      console.error("Error al enviar la solicitud:", error)
+      console.error("Error al enviar la solicitud:", error);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -235,6 +294,16 @@ export function NuevaCita() {
             />
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="transport"
+                checked={transportNeeded}
+                onCheckedChange={setTransportNeeded}
+              />
+              <Label htmlFor="transport">Transporte necesario</Label>
+            </div>
+          </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancelar
