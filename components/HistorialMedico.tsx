@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -28,16 +28,43 @@ type MedicalRecord = {
   }
 }
 
-const mockMedicalRecords: MedicalRecord[] = [
-  { id: 1, petName: "Max", ownerName: "John Doe", date: "2024-02-15", diagnosis: "Infección de oído", treatment: "Gotas para oídos recetadas", medications: "Otibiotic", vaccination: { applied: true, vaccine: "Rabia" } },
-  { id: 2, petName: "Luna", ownerName: "Jane Smith", date: "2024-02-20", diagnosis: "Chequeo anual", treatment: "Vacunas administradas", medications: "None", vaccination: { applied: true, vaccine: "Parvovirus" } },
-  { id: 3, petName: "Rocky", ownerName: "Mike Johnson", date: "2024-03-01", diagnosis: "Problemas dentales", treatment: "Limpieza dental programada", medications: "None", vaccination: { applied: false } },
-]
+type NewMedicalRecord = Omit<MedicalRecord, "id" | "date">
 
 export function PetMedicalHistory() {
-  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>(mockMedicalRecords)
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([])
   const [filter, setFilter] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchMedicalRecords = async () => {
+      try {
+        const response = await fetch('/api/registroMedico')
+        if (response.ok) {
+          const data = await response.json()
+          const formattedData = data.map((record: any) => ({
+            id: record.id,
+            petName: record.Mascota,
+            ownerName: record.Dueño,
+            date: record.Fecha,
+            diagnosis: record.Diagnostico,
+            treatment: record.Tratamiento,
+            medications: record.Medicamentos,
+            vaccination: {
+              applied: record.Vacunacion ? record.Vacunacion.startsWith('Sí') : false,
+              vaccine: record.Vacunacion && record.Vacunacion.startsWith('Sí') ? record.Vacunacion.split(' - ')[1] : undefined
+            }
+          }))
+          setMedicalRecords(formattedData)
+        } else {
+          console.error('API Error:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Error fetching medical records:', error)
+      }
+    }
+
+    fetchMedicalRecords()
+  }, [])
 
   const handleAddRecord = (newRecord: Omit<MedicalRecord, 'id' | 'date'>) => {
     const newId = Math.max(...medicalRecords.map(record => record.id)) + 1
@@ -47,8 +74,8 @@ export function PetMedicalHistory() {
   }
 
   const filteredRecords = medicalRecords.filter(record =>
-    record.petName.toLowerCase().includes(filter.toLowerCase()) ||
-    record.ownerName.toLowerCase().includes(filter.toLowerCase())
+    (record.petName && record.petName.toLowerCase().includes(filter.toLowerCase())) ||
+    (record.ownerName && record.ownerName.toLowerCase().includes(filter.toLowerCase()))
   )
 
   return (
