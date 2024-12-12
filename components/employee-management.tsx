@@ -12,22 +12,8 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react'
 
 type Employee = {
@@ -73,7 +59,15 @@ export function EmployeeManagement() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Gestión de Empleados</h2>
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar empleados..."
+            value={employeeFilter}
+            onChange={(e) => setEmployeeFilter(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
         <Dialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center justify-center space-x-2">
@@ -84,9 +78,6 @@ export function EmployeeManagement() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Agregar Nuevo Empleado</DialogTitle>
-              <DialogDescription>
-                Ingrese los detalles del nuevo empleado a continuación.
-              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -134,25 +125,13 @@ export function EmployeeManagement() {
                 <Label htmlFor="employeePassword" className="text-right">
                   Contraseña
                 </Label>
-                <div className="col-span-3 flex gap-2">
-                  <Input
-                    id="employeePassword"
-                    type="password"
-                    value={newEmployee.password}
-                    onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      const generatedPassword = Math.random().toString(36).slice(-8);
-                      setNewEmployee({ ...newEmployee, password: generatedPassword });
-                    }}
-                  >
-                    Generar
-                  </Button>
-                </div>
+                <Input
+                  id="employeePassword"
+                  type="password"
+                  value={newEmployee.password}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                  className="col-span-3"
+                />
               </div>
             </div>
             <DialogFooter>
@@ -160,15 +139,6 @@ export function EmployeeManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Search className="h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="Buscar empleados..."
-          value={employeeFilter}
-          onChange={(e) => setEmployeeFilter(e.target.value)}
-          className="max-w-sm"
-        />
       </div>
       <Table>
         <TableHeader>

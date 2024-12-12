@@ -47,11 +47,11 @@ export function VaccinesManagement() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const filteredVaccines = vaccines
-  .filter(vaccine => 
-    vaccine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    vaccine.id.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  .sort((a, b) => sortOrder === 'asc' ? a.stock - b.stock : b.stock - a.stock)
+    .filter(vaccine => 
+      vaccine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      vaccine.id.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => sortOrder === 'asc' ? a.stock - b.stock : b.stock - a.stock)
 
   const addVaccine = () => {
     if (!newVaccine.id || !newVaccine.name) {
@@ -239,4 +239,3 @@ export function VaccinesManagement() {
     </div>
   )
 }
-

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from 'next/navigation'
-import { HomeIcon, CalendarIcon, Syringe, UserCircle2, LogOutIcon, PawPrint, Stethoscope, FileText, Truck, BarChart } from 'lucide-react'
+import { HomeIcon, CalendarIcon, Syringe, UserCircle2, LogOutIcon, PawPrint, Stethoscope, FileText, Truck, BarChart, Package, Users, Briefcase } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from 'react'
 
@@ -70,11 +70,31 @@ export function SiteHeader() {
               </>
             ) : userRole === 'Administrador' ? (
               <>
-                <Link href="/admin-dashboard" className="flex items-center gap-1 text-sm hover:opacity-80">
-                  <BarChart className="h-4 w-4" />
-                  Dashboard de Administrador
+               <Link href="/inventory" className="flex items-center gap-1 text-sm hover:opacity-80">
+                  <Package className="h-4 w-4" />
+                  Inventario
                 </Link>
-                <Button onClick={handleLogout} variant="ghost" className="flex items-center gap-1 text-sm hover:opacity-80">
+                <Link href="/employees" className="flex items-center gap-1 text-sm hover:opacity-80">
+                  <Users className="h-4 w-4" />
+                  Empleados
+                </Link>
+                <Link href="/financial-reports" className="flex items-center gap-1 text-sm hover:opacity-80">
+                  <BarChart className="h-4 w-4" />
+                  Reportes Financieros
+                </Link>
+                <Link href="/servicios" className="flex items-center gap-1 text-sm hover:opacity-80">
+                  <Briefcase className="h-4 w-4" />
+                  Servicios
+                </Link>
+                <Link href="/vacunas" className="flex items-center gap-1 text-sm hover:opacity-80">
+                  <Syringe className="h-4 w-4" />
+                  Vacunas
+                </Link>
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="flex items-center gap-1 text-sm hover:opacity-80"
+                >
                   <LogOutIcon className="h-4 w-4" />
                   Cerrar Sesión
                 </Button>
