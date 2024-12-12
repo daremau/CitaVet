@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -10,78 +10,129 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Search, PlusCircle, Edit, Trash2, FileText } from 'lucide-react'
+import { Search, PlusCircle, Edit, Trash2, FileText, ArrowUpDown } from 'lucide-react'
+import { NewProductForm } from "./NuevoProducto"
 
-type InventoryItem = {
-  id: string
-  name: string
-  salePrice: number
-  purchasePrice: number
-  quantity: number
-  brand: string
-  discount: number
-  description: string
+interface Product {
+  IdProducto: string
+  NombreProducto: string 
+  TipoProducto: string
+  Descripcion: string
+  PrecioCompra: number
+  PrecioVenta: number
+  Descuento: number
+  Stock: number
+  FechaIngreso: string
 }
 
-const mockInventory: InventoryItem[] = [
-  { 
-    id: "M001", 
-    name: "Antibiótico General", 
-    salePrice: 85000,
-    purchasePrice: 60000,
-    quantity: 100,
-    brand: "PetMed",
-    discount: 0,
-    description: "Antibiótico de amplio espectro"
-  },
-  { 
-    id: "S001", 
-    name: "Shampoo Medicado", 
-    salePrice: 45000,
-    purchasePrice: 30000,
-    quantity: 30,
-    brand: "PetCare",
-    discount: 0,
-    description: "Para tratamiento de problemas de piel"
-  },
-  { 
-    id: "F001", 
-    name: "Alimento Premium para Perros", 
-    salePrice: 120000,
-    purchasePrice: 80000,
-    quantity: 50,
-    brand: "PetNutrition",
-    discount: 5,
-    description: "Alimento balanceado para perros adultos"
-  },
-  { 
-    id: "T001", 
-    name: "Juguete Interactivo", 
-    salePrice: 35000,
-    purchasePrice: 20000,
-    quantity: 40,
-    brand: "PetToy",
-    discount: 0,
-    description: "Juguete para estimulación mental de mascotas"
-  },
-]
+export interface NewProduct {
+  nombreProducto: string
+  tipo: string
+  descripcion: string
+  precioCompra: number
+  precioVenta: number
+  stock: number
+  descuento: number
+  proveedor: string
+}
 
 export function InventoryManagement() {
-  const [inventory] = useState(mockInventory)
+  const [products, setProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-
-  const filteredInventory = inventory.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.id.toLowerCase().includes(searchQuery.toLowerCase())
+  const [inventorySortOrder, setInventorySortOrder] = useState<'asc' | 'desc'>('desc')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const totalInventoryValue = products.reduce((sum, item) => 
+    sum + (item.PrecioCompra * item.Stock), 0
   )
 
-  const totalInventoryValue = inventory.reduce((sum, item) => 
-    sum + (item.purchasePrice * item.quantity), 0
+  const totalInventorySaleValue = products.reduce((sum, item) => 
+    sum + (item.PrecioVenta * item.Stock), 0
   )
 
-  const totalInventorySaleValue = inventory.reduce((sum, item) => 
-    sum + (item.salePrice * item.quantity), 0
+  const toggleInventorySort = () => {
+    setInventorySortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+  }
+
+  const handleAddProduct = (newProduct: Product) => {
+    setProducts([...products, newProduct])
+    setIsAddProductDialogOpen(false)
+  }
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/producto')
+        if (!response.ok) {
+          throw new Error('Error al cargar productos')
+        }
+        const data = await response.json()
+        
+        // Validate the data before setting it to state
+        if (Array.isArray(data) && data.every(item => 
+          item && 
+          typeof item.NombreProducto === 'string' &&
+          typeof item.IdProducto !== 'undefined'
+        )) {
+          setProducts(data)
+        } else {
+          throw new Error('Formato de datos inválido')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+        setError(error instanceof Error ? error.message : 'Error al cargar productos')
+        setProducts([]) // Set empty array on error
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  
+    fetchProducts()
+  }, [])
+
+const handleDelete = async (productId: string) => {
+  if (confirm('¿Está seguro que desea eliminar este producto?')) {
+    setDeletingId(productId);
+    try {
+      const response = await fetch(`/api/producto?id=${productId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        setProducts(products.filter(product => product.IdProducto !== productId));
+      } else {
+        throw new Error('Error al eliminar el producto');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+};
+
+  if (isLoading) {
+    return <div>Cargando...</div>
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>
+  }
+
+  const filteredProducts = products.filter(product => 
+    product && product.NombreProducto && 
+    (product.NombreProducto.toLowerCase().includes(searchQuery.toLowerCase()) ||
+     (product.IdProducto && product.IdProducto.toString().includes(searchQuery)))
   )
 
   return (
@@ -95,9 +146,16 @@ export function InventoryManagement() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleInventorySort}
+            className="ml-2"
+          >
+            <ArrowUpDown className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
@@ -106,7 +164,17 @@ export function InventoryManagement() {
               <TableHead>Nombre</TableHead>
               <TableHead className="text-right">Precio Venta</TableHead>
               <TableHead className="text-right">Precio Compra</TableHead>
-              <TableHead className="text-right">Cantidad</TableHead>
+              <TableHead className="text-right">
+                Cantidad
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 h-8 w-8 p-0"
+                  onClick={toggleInventorySort}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
               <TableHead>Marca</TableHead>
               <TableHead className="text-right">Descuento</TableHead>
               <TableHead>Descripción</TableHead>
@@ -114,28 +182,31 @@ export function InventoryManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredInventory.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.id}</TableCell>
-                <TableCell>{item.name}</TableCell>
-                <TableCell className="text-right">{item.salePrice.toLocaleString()} Gs.</TableCell>
-                <TableCell className="text-right">{item.purchasePrice.toLocaleString()} Gs.</TableCell>
-                <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell>{item.brand}</TableCell>
-                <TableCell className="text-right">{item.discount}%</TableCell>
-                <TableCell className="max-w-[200px] truncate">{item.description}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredProducts.map((product) => (
+                <TableRow key={product.IdProducto}>
+                  <TableCell>{product.IdProducto}</TableCell>
+                  <TableCell>{product.NombreProducto}</TableCell>
+                  <TableCell>{product.TipoProducto}</TableCell>
+                  <TableCell className="text-right">{product.PrecioCompra.toLocaleString()} Gs.</TableCell>
+                  <TableCell className="text-right">{product.PrecioVenta.toLocaleString()} Gs.</TableCell>
+                  <TableCell className="text-right">{product.Stock}</TableCell>
+                  <TableCell className="text-right">{product.Descuento}%</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm">
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="destructive" size="sm"
+                        onClick={() => handleDelete(product.IdProducto)}
+                        disabled={deletingId === product.IdProducto}
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
@@ -152,10 +223,23 @@ export function InventoryManagement() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button className="flex items-center gap-2">
-            <PlusCircle className="h-4 w-4" />
-            Agregar productos
-          </Button>
+          <Dialog open={isAddProductDialogOpen} onOpenChange={setIsAddProductDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Agregar productos
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Agregar Nuevo Producto</DialogTitle>
+              </DialogHeader>
+              <NewProductForm
+                onSubmit={handleAddProduct}
+                onCancel={() => setIsAddProductDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
           <Button variant="outline" className="flex items-center gap-2">
             <Edit className="h-4 w-4" />
             Modificar productos

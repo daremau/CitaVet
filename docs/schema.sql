@@ -38,7 +38,7 @@ CREATE TABLE `citas` (
   CONSTRAINT `citas_ibfk_1` FOREIGN KEY (`IdCliente`) REFERENCES `clientes` (`IdCliente`),
   CONSTRAINT `citas_ibfk_2` FOREIGN KEY (`IdMascota`) REFERENCES `mascotas` (`IdMascota`),
   CONSTRAINT `FK_Citas_Servicios` FOREIGN KEY (`IdServicio`) REFERENCES `servicios` (`IdServicio`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,7 +47,7 @@ CREATE TABLE `citas` (
 
 LOCK TABLES `citas` WRITE;
 /*!40000 ALTER TABLE `citas` DISABLE KEYS */;
-INSERT INTO `citas` VALUES (2,'2024-11-25 10:00:00',1,4,1,'Completado',NULL),(3,'2024-11-26 15:30:00',1,5,2,'Completado',NULL),(22,'2024-12-10 09:00:00',1,5,1,'Pendiente',NULL),(23,'2024-12-11 11:00:00',1,5,2,'Pendiente',NULL),(24,'2024-12-13 10:00:00',2,9,1,'Confirmada',NULL),(25,'2024-12-27 09:30:00',1,4,1,'Confirmada',NULL);
+INSERT INTO `citas` VALUES (2,'2024-11-25 10:00:00',1,4,1,'Completado',NULL),(3,'2024-11-26 15:30:00',1,5,2,'Completado',NULL),(22,'2024-12-10 09:00:00',1,5,1,'Pendiente',NULL),(23,'2024-12-11 11:00:00',1,5,2,'Pendiente',NULL),(25,'2024-12-27 09:30:00',1,4,1,'Confirmada',NULL),(26,'2024-12-12 12:30:00',2,12,2,'Confirmada',NULL);
 /*!40000 ALTER TABLE `citas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -83,67 +83,6 @@ INSERT INTO `clientes` VALUES (1,'Cliente 1','Calle Ejemplo 123','555123456','cl
 UNLOCK TABLES;
 
 --
--- Table structure for table `detallesfactura`
---
-
-DROP TABLE IF EXISTS `detallesfactura`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `detallesfactura` (
-  `IdDetalle` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `Cantidad` int DEFAULT NULL,
-  `PrecioUnitario` decimal(10,2) DEFAULT NULL,
-  `Subtotal` decimal(10,2) DEFAULT NULL,
-  `IdFactura` bigint unsigned DEFAULT NULL,
-  `IdProducto` bigint unsigned DEFAULT NULL,
-  PRIMARY KEY (`IdDetalle`),
-  UNIQUE KEY `IdDetalle` (`IdDetalle`),
-  KEY `IdFactura` (`IdFactura`),
-  KEY `IdProducto` (`IdProducto`),
-  CONSTRAINT `detallesfactura_ibfk_1` FOREIGN KEY (`IdFactura`) REFERENCES `facturas` (`IdFactura`),
-  CONSTRAINT `detallesfactura_ibfk_2` FOREIGN KEY (`IdProducto`) REFERENCES `productos` (`IdProducto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `detallesfactura`
---
-
-LOCK TABLES `detallesfactura` WRITE;
-/*!40000 ALTER TABLE `detallesfactura` DISABLE KEYS */;
-/*!40000 ALTER TABLE `detallesfactura` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `facturas`
---
-
-DROP TABLE IF EXISTS `facturas`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `facturas` (
-  `IdFactura` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `Fecha` date DEFAULT NULL,
-  `MontoTotal` decimal(10,2) DEFAULT NULL,
-  `MetodoPago` varchar(50) DEFAULT NULL,
-  `IdCliente` bigint unsigned DEFAULT NULL,
-  PRIMARY KEY (`IdFactura`),
-  UNIQUE KEY `IdFactura` (`IdFactura`),
-  KEY `IdCliente` (`IdCliente`),
-  CONSTRAINT `facturas_ibfk_1` FOREIGN KEY (`IdCliente`) REFERENCES `clientes` (`IdCliente`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `facturas`
---
-
-LOCK TABLES `facturas` WRITE;
-/*!40000 ALTER TABLE `facturas` DISABLE KEYS */;
-/*!40000 ALTER TABLE `facturas` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `mascotas`
 --
 
@@ -160,7 +99,7 @@ CREATE TABLE `mascotas` (
   UNIQUE KEY `IdMascota` (`IdMascota`),
   KEY `IdCliente` (`IdCliente`),
   CONSTRAINT `mascotas_ibfk_1` FOREIGN KEY (`IdCliente`) REFERENCES `clientes` (`IdCliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -169,7 +108,7 @@ CREATE TABLE `mascotas` (
 
 LOCK TABLES `mascotas` WRITE;
 /*!40000 ALTER TABLE `mascotas` DISABLE KEYS */;
-INSERT INTO `mascotas` VALUES (4,'Firulais','Perro','Labrador',1),(5,'Michi','Gato','Siames',1),(9,'c2mascota','Perro','Bulldog Inglés',2);
+INSERT INTO `mascotas` VALUES (4,'Firulais','Perro','Labrador',1),(5,'Michi','Gato','Siames',1),(11,'Ramon','Perro','Beagle',2),(12,'Ramon Jr','Perro','Beagle',2);
 /*!40000 ALTER TABLE `mascotas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -210,14 +149,18 @@ DROP TABLE IF EXISTS `productos`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `productos` (
-  `IdProducto` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `NombreProducto` varchar(50) DEFAULT NULL,
-  `TipoProducto` varchar(50) DEFAULT NULL,
-  `Precio` decimal(10,2) DEFAULT NULL,
-  `Stock` int DEFAULT NULL,
-  PRIMARY KEY (`IdProducto`),
-  UNIQUE KEY `IdProducto` (`IdProducto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `IdProducto` int NOT NULL AUTO_INCREMENT,
+  `NombreProducto` varchar(100) NOT NULL,
+  `Tipo` enum('Alimento','Juguete','Accesorio','Higiene','Medicamento','Otro') NOT NULL,
+  `Descripcion` text,
+  `Existencia` int NOT NULL DEFAULT '0',
+  `FechaIngreso` date DEFAULT NULL,
+  `PrecioCompra` int NOT NULL,
+  `PrecioVenta` int NOT NULL,
+  `Descuento` decimal(5,2) DEFAULT '0.00',
+  `Proveedor` varchar(100) NOT NULL,
+  PRIMARY KEY (`IdProducto`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -226,6 +169,7 @@ CREATE TABLE `productos` (
 
 LOCK TABLES `productos` WRITE;
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
+INSERT INTO `productos` VALUES (8,'Alimento para perros','Alimento','Saco de 15 kg de alimento premium para perros',30,'2024-12-01',800,1200,0.00,'Proveedor ABC'),(9,'Arena para gatos','Higiene','Bolsa de 5 kg de arena sanitaria para gatos',50,'2024-12-02',100,150,0.00,'Proveedor XYZ'),(10,'Juguete para perros','Juguete','Pelota de goma resistente para perros grandes',20,'2024-12-03',50,75,0.00,'Proveedor DEF'),(11,'Transportadora para gatos','Accesorio','Transportadora plástica para gatos pequeños',10,'2024-12-04',300,450,0.00,'Proveedor GHI'),(12,'Champú para mascotas','Higiene','Champú antipulgas para perros y gatos',25,'2024-12-05',60,90,0.00,'Proveedor JKL'),(13,'Antiparasitario oral','Medicamento','Tabletas para eliminar parásitos internos',15,'2024-12-06',150,200,0.00,'Proveedor ABC'),(14,'Antibiótico para perros','Medicamento','Solución antibiótica para infecciones cutáneas',10,'2024-12-07',250,350,0.00,'Proveedor XYZ');
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -320,14 +264,17 @@ CREATE TABLE `registromedico` (
   `IdMascota` bigint unsigned NOT NULL,
   `Vacunacion` tinyint(1) NOT NULL DEFAULT '0',
   `IdVacuna` int DEFAULT NULL,
+  `IdProducto` int DEFAULT NULL,
   PRIMARY KEY (`Id`),
   KEY `IdVeterinario` (`IdVeterinario`),
-  KEY `IdMascota` (`IdMascota`),
   KEY `FK_Vacunas` (`IdVacuna`),
+  KEY `FK_Productos` (`IdProducto`),
+  KEY `FK_Mascotas` (`IdMascota`),
+  CONSTRAINT `FK_Mascotas` FOREIGN KEY (`IdMascota`) REFERENCES `mascotas` (`IdMascota`) ON DELETE CASCADE,
+  CONSTRAINT `FK_Productos` FOREIGN KEY (`IdProducto`) REFERENCES `productos` (`IdProducto`),
   CONSTRAINT `FK_Vacunas` FOREIGN KEY (`IdVacuna`) REFERENCES `vacunas` (`IdVacuna`),
-  CONSTRAINT `registromedico_ibfk_1` FOREIGN KEY (`IdVeterinario`) REFERENCES `veterinarios` (`IdVeterinario`),
-  CONSTRAINT `registromedico_ibfk_2` FOREIGN KEY (`IdMascota`) REFERENCES `mascotas` (`IdMascota`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `registromedico_ibfk_1` FOREIGN KEY (`IdVeterinario`) REFERENCES `veterinarios` (`IdVeterinario`)
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -336,7 +283,6 @@ CREATE TABLE `registromedico` (
 
 LOCK TABLES `registromedico` WRITE;
 /*!40000 ALTER TABLE `registromedico` DISABLE KEYS */;
-INSERT INTO `registromedico` VALUES (7,'2024-12-01','Infección en la piel','Antibióticos tópicos por 7 días',1,4,0,NULL),(8,'2024-12-05','Vacunación anual','Vacuna contra la rabia y refuerzo polivalente',1,5,0,NULL),(9,'2024-12-10','Fractura en la pata trasera','Reposo y antiinflamatorios por 4 semanas',1,9,0,NULL),(10,'2024-12-15','Problemas dentales','Limpieza dental bajo anestesia',1,4,0,NULL),(11,'2024-12-20','Infección urinaria','Antibióticos orales por 10 días',1,5,0,NULL),(12,'2024-12-25','Otitis externa','Gotas óticas por 7 días',1,9,0,NULL),(13,'2024-12-05','Vacunación anual','Vacuna contra la rabia y refuerzo polivalente',1,5,1,1);
 /*!40000 ALTER TABLE `registromedico` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -497,4 +443,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-11 19:18:44
+-- Dump completed on 2024-12-12 13:00:10

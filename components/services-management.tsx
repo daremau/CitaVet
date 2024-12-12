@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -30,40 +30,111 @@ type Service = {
   price: number
 }
 
-const mockServices: Service[] = [
-  { id: "S001", name: "Consulta general", description: "Revisión general de la mascota", price: 150000 },
-  { id: "S002", name: "Vacunación", description: "Aplicación de vacunas", price: 100000 },
-  { id: "S003", name: "Cirugía menor", description: "Procedimientos quirúrgicos menores", price: 500000 },
-  { id: "S004", name: "Limpieza dental", description: "Limpieza y revisión dental", price: 200000 },
-]
-
 export function ServicesManagement() {
-  const [services, setServices] = useState<Service[]>(mockServices)
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isAddServiceDialogOpen, setIsAddServiceDialogOpen] = useState(false)
-  const [newService, setNewService] = useState<Service>({ id: "", name: "", description: "", price: 0 })
+  const [newService, setNewService] = useState<Service>({
+    id: "",
+    name: "",
+    description: "",
+    price: 0
+  })
 
   const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.id.toLowerCase().includes(searchQuery.toLowerCase())
+    service.id.toString().toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const addService = () => {
-    if (!newService.id || !newService.name) {
-      alert("Por favor complete todos los campos requeridos")
-      return
+  const addService = async () => {
+    if (!newService.name) {
+        alert("Por favor complete todos los campos requeridos")
+        return
     }
 
-    setServices([...services, newService])
-    setNewService({ id: "", name: "", description: "", price: 0 })
-    setIsAddServiceDialogOpen(false)
+    try {
+        const response = await fetch('/api/servicios', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newService)
+        });
+
+        if (response.ok) {
+            // Recargar la lista de servicios
+            const updatedResponse = await fetch('/api/servicios');
+            if (updatedResponse.ok) {
+                const data = await updatedResponse.json();
+                const mappedServices = data.map((service: any) => ({
+                    id: service.id,
+                    name: service.name,
+                    description: service.Descripcion,
+                    price: Number(service.Precio) || 0
+                }));
+                setServices(mappedServices);
+            }
+
+            // Limpiar el formulario
+            setNewService({ id: "", name: "", description: "", price: 0 });
+            setIsAddServiceDialogOpen(false);
+        } else {
+            alert('Error al agregar el servicio');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al agregar el servicio');
+    }
   }
 
-  const deleteService = (id: string) => {
+  const deleteService = async (id: string) => {
     if (confirm('¿Está seguro que desea eliminar este servicio?')) {
-      setServices(services.filter(service => service.id !== id))
+        try {
+            const response = await fetch(`/api/servicios?id=${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                setServices(services.filter(service => service.id !== id));
+            } else {
+                throw new Error('Error al eliminar el servicio');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al eliminar el servicio');
+        }
     }
   }
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/servicios')
+        if (!response.ok) throw new Error('Error al cargar servicios')
+        
+        const data = await response.json()
+        // Map API response to match Service type
+        const mappedServices = data.map((service: any) => ({
+          id: service.id,
+          name: service.name,
+          description: service.Descripcion,
+          price: Number(service.Precio) || 0 // Ensure price is a number
+        }))
+        
+        setServices(mappedServices)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Error desconocido')
+        console.error('Error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchServices()
+  }, [])
 
   return (
     <div className="space-y-4">
@@ -96,7 +167,12 @@ export function ServicesManagement() {
                 <TableCell className="font-medium">{service.id}</TableCell>
                 <TableCell>{service.name}</TableCell>
                 <TableCell>{service.description}</TableCell>
-                <TableCell className="text-right">{service.price.toLocaleString()} Gs.</TableCell>
+                <TableCell className="text-right">
+                  {service.price ? 
+                    `${service.price.toLocaleString()} Gs.` : 
+                    '0 Gs.'
+                  }
+                </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <Button variant="ghost" size="icon">
@@ -133,15 +209,6 @@ export function ServicesManagement() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="serviceId" className="text-right">Código</Label>
-                <Input
-                  id="serviceId"
-                  value={newService.id}
-                  onChange={(e) => setNewService({ ...newService, id: e.target.value })}
-                  className="col-span-3"
-                />
-              </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="serviceName" className="text-right">Nombre</Label>
                 <Input
@@ -188,4 +255,3 @@ export function ServicesManagement() {
     </div>
   )
 }
-

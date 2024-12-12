@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -17,36 +17,104 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PlusCircle, Search, Edit, Trash2 } from 'lucide-react'
 
 type Employee = {
-  id: number
-  name: string
-  role: string
-  username: string
-  password: string
+  id: number           // IdUsuario
+  username: string     // NombreUsuario 
+  password: string     // Contrasena
+  role: string        // Tipo
+  name: string        // Nombre
+  email: string       // Email
+  address: string     // Direccion
+  phone: string       // Telefono
 }
 
-const mockEmployees: Employee[] = [
-  { id: 1, name: "Dr. Juan Pérez", role: "Veterinario", username: "veterinario1", password: "password1" },
-  { id: 2, name: "María González", role: "Recepcionista", username: "recepcionista1", password: "password2" },
-  { id: 3, name: "Carlos Rodríguez", role: "Repartidor", username: "delivery1", password: "password3" },
-]
-
 export function EmployeeManagement() {
-  const [employees, setEmployees] = useState<Employee[]>(mockEmployees)
-  const [newEmployee, setNewEmployee] = useState({ name: "", role: "", username: "", password: "" })
-  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false)
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [employeeFilter, setEmployeeFilter] = useState("")
+  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false)
+  const [newEmployee, setNewEmployee] = useState({
+    name: "", 
+    role: "", 
+    username: "", 
+    password: "",
+    email: "",
+    address: "",
+    phone: ""
+  })
 
-  const addEmployee = () => {
+  const addEmployee = async () => {
     if (newEmployee.name && newEmployee.role && newEmployee.username && newEmployee.password) {
-      setEmployees([...employees, { id: Date.now(), ...newEmployee }])
-      setNewEmployee({ name: "", role: "", username: "", password: "" })
-      setIsAddEmployeeDialogOpen(false)
+      try {
+        const response = await fetch('/api/usuarios', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            name: newEmployee.name,
+            username: newEmployee.username,
+            password: newEmployee.password,
+            role: newEmployee.role,
+            email: newEmployee.email || '',
+            address: newEmployee.address || '',
+            phone: newEmployee.phone || ''
+          }),
+        })
+  
+        if (response.ok) {
+          // Recargar la lista de empleados
+          const updatedResponse = await fetch('/api/usuarios')
+          if (updatedResponse.ok) {
+            const data = await updatedResponse.json()
+            const formattedEmployees = data.map((user: any) => ({
+              id: user.IdUsuario,
+              username: user.NombreUsuario,
+              password: user.Contrasena,
+              role: user.Tipo,
+              name: user.Nombre || '',
+              email: user.Email || '',
+              address: user.Direccion || '',
+              phone: user.Telefono || ''
+            }))
+            setEmployees(formattedEmployees)
+          }
+          
+          // Limpiar el formulario
+          setNewEmployee({ 
+            name: "", 
+            role: "", 
+            username: "", 
+            password: "",
+            email: "",
+            address: "",
+            phone: ""
+          })
+          setIsAddEmployeeDialogOpen(false)
+        } else {
+          console.error('Error al agregar empleado')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
     }
   }
 
-  const deleteEmployee = (id: number) => {
+  const deleteEmployee = async (id: number) => {
     if (confirm('¿Está seguro que desea eliminar este empleado?')) {
-      setEmployees(employees.filter(employee => employee.id !== id))
+      try {
+        const response = await fetch(`/api/usuarios?id=${id}`, {
+          method: 'DELETE'
+        });
+  
+        if (response.ok) {
+          setEmployees(employees.filter(employee => employee.id !== id));
+        } else {
+          throw new Error('Error al eliminar el empleado');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
     }
   }
 
@@ -55,6 +123,39 @@ export function EmployeeManagement() {
     employee.role.toLowerCase().includes(employeeFilter.toLowerCase()) ||
     employee.username.toLowerCase().includes(employeeFilter.toLowerCase())
   )
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const response = await fetch('/api/usuarios')
+        if (response.ok) {
+          const data = await response.json()
+          const formattedEmployees: Employee[] = data.map((user: any) => ({
+            id: user.IdUsuario,
+            username: user.NombreUsuario,
+            password: user.Contrasena,
+            role: user.Tipo,
+            name: user.Nombre || '',
+            email: user.Email || '',
+            address: user.Direccion || '',
+            phone: user.Telefono || ''
+          }))
+          setEmployees(formattedEmployees)
+        } else {
+          setError('Error al cargar usuarios')
+        }
+      } catch (error) {
+        setError('Error al cargar usuarios')
+        console.error('Error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEmployees()
+  }, [])
+
+  
 
   return (
     <div className="space-y-4">
@@ -103,9 +204,10 @@ export function EmployeeManagement() {
                     <SelectValue placeholder="Seleccionar rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Veterinario">Veterinario</SelectItem>
                     <SelectItem value="Recepcionista">Recepcionista</SelectItem>
-                    <SelectItem value="Repartidor">Repartidor</SelectItem>
+                    <SelectItem value="Cliente">Cliente</SelectItem>
+                    <SelectItem value="Veterinario">Veterinario</SelectItem>
+                    <SelectItem value="PersonalDelivery">Personal Delivery</SelectItem>
                     <SelectItem value="Administrador">Administrador</SelectItem>
                   </SelectContent>
                 </Select>
@@ -130,6 +232,40 @@ export function EmployeeManagement() {
                   type="password"
                   value={newEmployee.password}
                   onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="employeeEmail" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="employeeEmail"
+                  type="email"
+                  value={newEmployee.email}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="employeeAddress" className="text-right">
+                  Dirección
+                </Label>
+                <Input
+                  id="employeeAddress"
+                  value={newEmployee.address}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, address: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="employeePhone" className="text-right">
+                  Teléfono
+                </Label>
+                <Input
+                  id="employeePhone"
+                  value={newEmployee.phone}
+                  onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
                   className="col-span-3"
                 />
               </div>
