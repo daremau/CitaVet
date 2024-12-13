@@ -239,14 +239,6 @@ export function VaccinesManagement() {
             />
           </DialogContent>
         </Dialog>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Edit className="h-4 w-4" />
-          Modificar vacunas
-        </Button>
-        <Button variant="outline" className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          Generar reporte
-        </Button>
       </div>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

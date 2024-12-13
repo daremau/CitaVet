@@ -108,8 +108,9 @@ export function PendingVaccinations() {
     if (!selectedVaccination) return
   
     try {
+      // Crear la cita
       const appointmentDateTime = `${selectedDate}T${selectedTime}`
-      const response = await fetch("/api/appointments", {
+      const appointmentResponse = await fetch("/api/appointments", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -117,23 +118,36 @@ export function PendingVaccinations() {
         },
         body: JSON.stringify({
           petId: Number(selectedVaccination.petId),
-          serviceId: "2",
+          serviceId: "2", // ID del servicio de vacunación
           dateTime: new Date(appointmentDateTime).toLocaleString('en-US'),
           notes: `Vacunación - ${selectedVaccination.vaccineName}`
         })
       })
   
-      if (response.ok) {
-        window.alert("La cita para vacunación ha sido programada exitosamente")
-        setIsDialogOpen(false)
-        const updatedVaccinations = vaccinations.filter(v => v.id !== selectedVaccination.id)
-        setVaccinations(updatedVaccinations)
+      if (appointmentResponse.ok) {
+        // Si la cita se creó exitosamente, eliminar la vacunación pendiente
+        const deleteResponse = await fetch(
+          `/api/vacunaspendientes/${selectedVaccination.id}`,
+          { method: "DELETE" }
+        )
+  
+        if (deleteResponse.ok) {
+          // Actualizar el estado local eliminando la vacuna programada
+          const updatedVaccinations = vaccinations.filter(
+            v => v.id !== selectedVaccination.id
+          )
+          setVaccinations(updatedVaccinations)
+          setIsDialogOpen(false)
+          window.alert("La cita para vacunación ha sido programada exitosamente")
+        } else {
+          window.alert("La cita se creó pero hubo un error al actualizar el estado de la vacuna")
+        }
       } else {
         window.alert("Error: No se pudo crear la cita")
       }
     } catch (error) {
-      console.error('Error creating appointment:', error)
-      window.alert("Error: Ocurrió un error al crear la cita")
+      console.error('Error:', error)
+      window.alert("Error: Ocurrió un error al procesar la solicitud")
     }
   }
 
