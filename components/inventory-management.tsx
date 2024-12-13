@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Search, PlusCircle, Edit, Trash2, FileText, ArrowUpDown } from 'lucide-react'
@@ -55,6 +56,9 @@ export function InventoryManagement() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isEditProductDialogOpen, setIsEditProductDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [isGenerateReportDialogOpen, setIsGenerateReportDialogOpen] = useState(false)
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
   const totalInventoryValue = products.reduce((sum, item) => 
     sum + (item.PrecioCompra * item.Existencia), 0
   )
@@ -152,6 +156,40 @@ const handleDelete = async (productId: string) => {
     }
   }
 };
+
+// Agregar después de las otras funciones
+const handleGenerateReport = () => {
+  // Validar que ambas fechas estén seleccionadas
+  if (!startDate || !endDate) {
+    alert("Por favor seleccione ambas fechas")
+    return
+  }
+
+  // Convertir las fechas a objetos Date para comparar
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+
+  if (start > end) {
+    alert("La fecha de inicio debe ser anterior a la fecha final")
+    return
+  }
+
+  // Filtrar productos por fecha de ingreso
+  const filteredProducts = products.filter(product => {
+    const productDate = new Date(product.FechaIngreso)
+    return productDate >= start && productDate <= end
+  })
+
+  // Aquí puedes implementar la lógica para generar el reporte
+  // Por ahora solo mostraremos un console.log
+  console.log("Generando reporte para productos entre:", startDate, "y", endDate)
+  console.log("Productos filtrados:", filteredProducts)
+
+  // Cerrar el diálogo
+  setIsGenerateReportDialogOpen(false)
+  setStartDate("")
+  setEndDate("")
+}
 
   if (isLoading) {
     return <div>Cargando...</div>
@@ -271,10 +309,53 @@ const handleDelete = async (productId: string) => {
               />
             </DialogContent>
           </Dialog>
-          <Button variant="outline" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Generar reporte
-          </Button>
+          <Dialog open={isGenerateReportDialogOpen} onOpenChange={setIsGenerateReportDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Generar reporte
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Generar Reporte de Inventario</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="startDate" className="text-right col-span-1">
+                    Fecha inicial
+                  </label>
+                  <Input
+                    id="startDate"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="endDate" className="text-right col-span-1">
+                    Fecha final
+                  </label>
+                  <Input
+                    id="endDate"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="secondary" onClick={() => setIsGenerateReportDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={handleGenerateReport}>
+                  Generar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       {editingProduct && (
