@@ -49,6 +49,43 @@ export async function POST(request: NextRequest) {
     }
 }
 
+export async function PUT(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+        const vaccine = await request.json();
+
+        if (!id) {
+            return new NextResponse(JSON.stringify({ message: 'Missing id parameter' }), { status: 400 });
+        }
+
+        const formattedDate = new Date(vaccine.expirationDate).toISOString().split('T')[0];
+
+        const [result] = await pool.query(
+            `UPDATE Vacunas 
+             SET NombreVacuna = ?, 
+                 Descripcion = ?, 
+                 Fabricante = ?, 
+                 FechaVencimiento = ?, 
+                 Existencia = ?
+             WHERE IdVacuna = ?`,
+            [
+                vaccine.name,
+                vaccine.description,
+                vaccine.manufacturer,
+                formattedDate, // Use formatted date
+                vaccine.stock,
+                id
+            ]
+        );
+
+        return new NextResponse(JSON.stringify(result), { status: 200 });
+    } catch (error) {
+        console.error('Database error:', error);
+        return new NextResponse(JSON.stringify({ message: 'server error' }), { status: 500 });
+    }
+}
+
 export async function DELETE(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);

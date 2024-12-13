@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog"
 import { PlusCircle, Search, Edit, Trash2, FileText, ArrowUpDown } from 'lucide-react'
 import { NewVaccineForm } from "./NuevaVacuna"
+import { EditVaccineForm } from "./EditarVacuna"
 
 type Vaccine = {
   IdVacuna: number
@@ -38,6 +39,8 @@ export function VaccinesManagement() {
   const [isAddVaccineDialogOpen, setIsAddVaccineDialogOpen] = useState(false)
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [isLoading, setIsLoading] = useState(true)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedVaccine, setSelectedVaccine] = useState<Vaccine | null>(null)
 
   const filteredVaccines = vaccines
   .filter(vaccine => 
@@ -67,6 +70,11 @@ export function VaccinesManagement() {
 
   const toggleSort = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+  }
+
+  const handleEdit = (vaccine: Vaccine) => {
+    setSelectedVaccine(vaccine)
+    setIsEditDialogOpen(true)
   }
 
   useEffect(() => {
@@ -158,7 +166,11 @@ export function VaccinesManagement() {
                   <TableCell>{new Date(vaccine.FechaVencimiento).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEdit(vaccine)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
@@ -241,6 +253,50 @@ export function VaccinesManagement() {
           Generar reporte
         </Button>
       </div>
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Vacuna</DialogTitle>
+            <DialogDescription>
+              Modifique los detalles de la vacuna.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVaccine && (
+            <EditVaccineForm
+              vaccine={selectedVaccine}
+              onSubmit={async (updatedVaccine) => {
+                try {
+                  const response = await fetch(`/api/vacunas?id=${updatedVaccine.IdVacuna}`, {
+                    method: 'PUT',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      name: updatedVaccine.NombreVacuna,
+                      description: updatedVaccine.Descripcion,
+                      manufacturer: updatedVaccine.Fabricante,
+                      expirationDate: updatedVaccine.FechaVencimiento,
+                      stock: updatedVaccine.Existencia
+                    })
+                  });
+
+                  if (response.ok) {
+                    setVaccines(vaccines.map(v => 
+                      v.IdVacuna === updatedVaccine.IdVacuna ? updatedVaccine : v
+                    ));
+                    setIsEditDialogOpen(false);
+                  } else {
+                    console.error('Failed to update vaccine');
+                  }
+                } catch (error) {
+                  console.error('Error updating vaccine:', error);
+                }
+              }}
+              onCancel={() => setIsEditDialogOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
