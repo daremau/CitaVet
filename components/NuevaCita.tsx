@@ -133,21 +133,23 @@ export function NuevaCita() {
 
   useEffect(() => {
     const fetchTimeSlots = async () => {
+      if (!selectedDate) return; // Don't fetch if no date selected
+      
       try {
-        const response = await fetch(`/api/horarios`)
+        const response = await fetch(`/api/horarios?fecha=${selectedDate}`);
         if (response.ok) {
-          const data = await response.json()
-          setTimeSlots(data)
+          const data = await response.json();
+          setTimeSlots(data);
         } else {
-          console.error('API Error:', response.statusText)
+          console.error('API Error:', response.statusText);
         }
       } catch (error) {
-        console.error('Error fetching time slots:', error)
+        console.error('Error fetching time slots:', error);
       }
-    }
+    };
 
-    fetchTimeSlots()
-  }, [])
+    fetchTimeSlots();
+  }, [selectedDate]); // Add selectedDate as dependency
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -311,4 +313,3 @@ export function NuevaCita() {
     </Dialog>
   )
 }
-
