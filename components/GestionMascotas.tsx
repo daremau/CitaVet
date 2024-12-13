@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { NewPetDialog } from "./NuevaMascota"
+import { EditPetDialog } from "./EditarMascota"
 
 type Pet = {
   id: number
@@ -21,6 +22,10 @@ type Pet = {
 
 export function PetManager() {
   const [pets, setPets] = useState<Pet[]>([])
+  const [editingPet, setEditingPet] = useState<Pet | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+
+  
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -44,6 +49,16 @@ export function PetManager() {
 
     fetchPets()
   }, [])
+
+  const handleEdit = (pet: Pet) => {
+    setEditingPet(pet)
+    setIsEditDialogOpen(true)
+  }
+
+  const handlePetUpdated = () => {
+    // Recargar la lista de mascotas
+    fetchPets()
+  }
 
   const handleDelete = async (petId: number) => {
     try {
@@ -90,7 +105,11 @@ export function PetManager() {
                 <TableCell>{pet.breed}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleEdit(pet)}
+                    >
                       Editar
                     </Button>
                     <Button variant="destructive" size="sm" onClick={() => handleDelete(pet.id)}>
@@ -109,7 +128,19 @@ export function PetManager() {
           )}
         </TableBody>
       </Table>
+      
+      {editingPet && (
+        <EditPetDialog
+          pet={editingPet}
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onPetUpdated={handlePetUpdated}
+        />
+      )}
     </div>
   )
+}
+function fetchPets() {
+  throw new Error("Function not implemented.")
 }
 
