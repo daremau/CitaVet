@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.38, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: citavet
 -- ------------------------------------------------------
@@ -104,7 +104,7 @@ CREATE TABLE `detallefactura` (
   CONSTRAINT `detallefactura_ibfk_1` FOREIGN KEY (`id_factura`) REFERENCES `factura` (`id`) ON DELETE CASCADE,
   CONSTRAINT `detallefactura_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`IdProducto`) ON DELETE SET NULL,
   CONSTRAINT `detallefactura_ibfk_3` FOREIGN KEY (`id_servicio`) REFERENCES `servicios` (`IdServicio`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -113,6 +113,7 @@ CREATE TABLE `detallefactura` (
 
 LOCK TABLES `detallefactura` WRITE;
 /*!40000 ALTER TABLE `detallefactura` DISABLE KEYS */;
+INSERT INTO `detallefactura` VALUES (1,1,'Efectivo',8,NULL,6,7200.00),(2,1,'Efectivo',NULL,3,1,200.00),(3,2,'Efectivo',NULL,5,1,2500.00),(4,2,'Efectivo',11,NULL,1,450.00),(5,2,'Efectivo',10,NULL,1,75.00);
 /*!40000 ALTER TABLE `detallefactura` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -131,7 +132,7 @@ CREATE TABLE `factura` (
   `ruc` varchar(20) NOT NULL,
   `monto_total` decimal(10,2) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -140,6 +141,7 @@ CREATE TABLE `factura` (
 
 LOCK TABLES `factura` WRITE;
 /*!40000 ALTER TABLE `factura` DISABLE KEYS */;
+INSERT INTO `factura` VALUES (1,'F1734095119443','2024-12-13','juan perez','546754334',8140.00),(2,'F1734095277424','2024-12-13','jon doe','546777777',3327.50);
 /*!40000 ALTER TABLE `factura` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -169,7 +171,7 @@ CREATE TABLE `mascotas` (
 
 LOCK TABLES `mascotas` WRITE;
 /*!40000 ALTER TABLE `mascotas` DISABLE KEYS */;
-INSERT INTO `mascotas` VALUES (4,'Firu','Perro','Pastor Alemán',1),(5,'Michi','Gato','Siames',1),(11,'Ramon','Perro','Beagle',2),(12,'Ramon Jr','Perro','Beagle',2),(13,'Michifus','Gato','Persa',1);
+INSERT INTO `mascotas` VALUES (4,'Firulais','Perro','Pastor Alemán',1),(5,'Michi','Gato','Siames',1),(11,'Ramon','Perro','Beagle',2),(12,'Ramon Jr','Perro','Beagle',2),(13,'Michifus','Gato','Persa',1);
 /*!40000 ALTER TABLE `mascotas` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -353,6 +355,33 @@ INSERT INTO `registromedico` VALUES (23,'2024-12-13','vacunacion','vacunacion',1
 UNLOCK TABLES;
 
 --
+-- Table structure for table `reportes`
+--
+
+DROP TABLE IF EXISTS `reportes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reportes` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `fecha` varchar(20) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `ingresos` int NOT NULL,
+  `gastos` int NOT NULL,
+  `beneficios` int GENERATED ALWAYS AS ((`ingresos` - `gastos`)) STORED,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `reportes`
+--
+
+LOCK TABLES `reportes` WRITE;
+/*!40000 ALTER TABLE `reportes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `reportes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `servicios`
 --
 
@@ -431,7 +460,7 @@ CREATE TABLE `usuarios` (
   PRIMARY KEY (`IdUsuario`),
   UNIQUE KEY `IdUsuario` (`IdUsuario`),
   UNIQUE KEY `NombreUsuario` (`NombreUsuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -440,7 +469,7 @@ CREATE TABLE `usuarios` (
 
 LOCK TABLES `usuarios` WRITE;
 /*!40000 ALTER TABLE `usuarios` DISABLE KEYS */;
-INSERT INTO `usuarios` VALUES (1,'recepcionista1','1234','Recepcionista','Recepcionista 1','email@email.test','',''),(2,'cliente1','1234','Cliente','Cliente 1','','',''),(3,'veterinario1','1234','Veterinario','','',NULL,NULL),(5,'admin1','1234','Administrador','','',NULL,NULL),(6,'cliente2','1234','Cliente','','',NULL,NULL),(9,'mauri','1234','Administrador','mauri','emial@email.com','direccion','09710000'),(10,'delivery1','1234','PersonalDelivery','delivery 1','delivery@gmail.com','delivery','09811000000'),(11,'carlosl','1234','Recepcionista','Carlos López','carlos@example.com','Av. Siempre Viva 742','555123789');
+INSERT INTO `usuarios` VALUES (1,'recepcionista1','1234','Recepcionista','Recepcionista 1','email@email.test','',''),(2,'cliente1','1234','Cliente','Cliente 1','','',''),(3,'veterinario1','1234','Veterinario','','',NULL,NULL),(5,'admin1','1234','Administrador','','',NULL,NULL),(6,'cliente2','1234','Cliente','','',NULL,NULL),(9,'mauri','1234','Administrador','mauri','emial@email.com','direccion','09710000'),(10,'delivery1','1234','PersonalDelivery','delivery 1','delivery@gmail.com','delivery','09811000000'),(11,'carlosl','1234','Recepcionista','Carlos López','carlos@example.com','Av. Siempre Viva 742','555123789'),(12,'rece1','1234','Recepcionista','rece','rece@mail.com','rece dir','6564564456');
 /*!40000 ALTER TABLE `usuarios` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -514,4 +543,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-13  5:51:43
+-- Dump completed on 2024-12-13 11:04:23

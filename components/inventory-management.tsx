@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -157,15 +158,13 @@ const handleDelete = async (productId: string) => {
   }
 };
 
-// Agregar después de las otras funciones
-const handleGenerateReport = () => {
-  // Validar que ambas fechas estén seleccionadas
+const handleGenerateReport = async () => {
+  // 1. Validaciones iniciales 
   if (!startDate || !endDate) {
     alert("Por favor seleccione ambas fechas")
     return
   }
 
-  // Convertir las fechas a objetos Date para comparar
   const start = new Date(startDate)
   const end = new Date(endDate)
 
@@ -174,21 +173,66 @@ const handleGenerateReport = () => {
     return
   }
 
-  // Filtrar productos por fecha de ingreso
-  const filteredProducts = products.filter(product => {
-    const productDate = new Date(product.FechaIngreso)
-    return productDate >= start && productDate <= end
-  })
+  try {
+    // 2. Obtener detalles de facturas en el rango de fechas
+    const response = await fetch(
+      `/api/detallefactura/producto?startDate=${startDate}&endDate=${endDate}`
+    )
 
-  // Aquí puedes implementar la lógica para generar el reporte
-  // Por ahora solo mostraremos un console.log
-  console.log("Generando reporte para productos entre:", startDate, "y", endDate)
-  console.log("Productos filtrados:", filteredProducts)
+    if (!response.ok) {
+      throw new Error('Error al obtener datos de facturas')
+    }
 
-  // Cerrar el diálogo
-  setIsGenerateReportDialogOpen(false)
-  setStartDate("")
-  setEndDate("")
+    const detalles = await response.json()
+
+    // 3. Calcular totales
+    let ingresos = 0
+    let gastos = 0
+
+    detalles.forEach((detalle: any) => {
+      if (detalle.id_producto) {
+        // Convert subtotal to number and add to ingresos
+        ingresos += Number(detalle.subtotal)
+        
+        // Calculate costs
+        const producto = products.find(p => p.IdProducto === detalle.id_producto)
+        if (producto) {
+          gastos += producto.PrecioCompra * detalle.cantidad
+        }
+      }
+    })
+
+    // 4. Crear el reporte - ensure values are integers
+    const reporteData = {
+      fecha: `${format(start, 'dd/MM/yy')}-${format(end, 'dd/MM/yy')}`,
+      nombre: 'Reporte Productos',
+      ingresos: Math.round(ingresos), // Convert to integer
+      gastos: Math.round(gastos) // Convert to integer
+    }
+
+    // 5. Guardar el reporte
+    const saveResponse = await fetch('/api/reportes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(reporteData)
+    })
+
+    if (!saveResponse.ok) {
+      throw new Error('Error al guardar el reporte')
+    }
+
+    // 6. Cerrar diálogo y mostrar confirmación
+    setIsGenerateReportDialogOpen(false)
+    setStartDate("")
+    setEndDate("")
+    alert('Reporte generado exitosamente')
+
+  } catch (error) {
+    console.error('Error:', error)
+    alert('Error al generar el reporte')
+  }
 }
 
   if (isLoading) {
