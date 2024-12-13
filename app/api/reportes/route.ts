@@ -1,5 +1,21 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
+
+export async function GET(request: NextRequest) {
+  try {
+    const [reportes] = await pool.query(
+      'SELECT * FROM reportes ORDER BY id DESC'
+    )
+    
+    return NextResponse.json(reportes)
+  } catch (error) {
+    console.error('Database error:', error)
+    return NextResponse.json(
+      { message: 'Error al obtener reportes' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
     try {
