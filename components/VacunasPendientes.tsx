@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -11,25 +11,79 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 type Vaccination = {
   id: number
+  petId: number
   petName: string
   vaccineName: string
   dueDate: string
   status: "Pendiente" | "Próxima" | "Atrasada"
 }
 
-const mockVaccinations: Vaccination[] = [
-  { id: 1, petName: "Max", vaccineName: "Rabia", dueDate: "2024-04-15", status: "Pendiente" },
-  { id: 2, petName: "Luna", vaccineName: "Parvovirus", dueDate: "2024-03-30", status: "Próxima" },
-  { id: 3, petName: "Rocky", vaccineName: "Moquillo", dueDate: "2024-03-10", status: "Atrasada" },
-  { id: 4, petName: "Bella", vaccineName: "Leptospirosis", dueDate: "2024-05-01", status: "Pendiente" },
-  { id: 5, petName: "Charlie", vaccineName: "Hepatitis", dueDate: "2024-04-20", status: "Pendiente" },
-]
+interface TimeSlot {
+  Hora: string
+}
 
 export function PendingVaccinations() {
-  const [vaccinations, setVaccinations] = useState<Vaccination[]>(mockVaccinations)
+  const [vaccinations, setVaccinations] = useState<Vaccination[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState("")
+  const [selectedTime, setSelectedTime] = useState("")
+  const [selectedVaccination, setSelectedVaccination] = useState<Vaccination | null>(null)
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([])
+
+  useEffect(() => {
+    const fetchVaccinations = async () => {
+      try {
+        const response = await fetch('/api/vacunaspendientes')
+        if (response.ok) {
+          const data = await response.json()
+          setVaccinations(data.map((vac: any) => ({
+            id: vac.vacuna_id,  
+            petId: vac.mascota_id, 
+            petName: vac.mascota_nombre,
+            vaccineName: vac.nombre_vacuna,
+            dueDate: new Date(vac.fecha_prevista).toLocaleDateString(),
+            status: vac.estado as "Pendiente" | "Próxima" | "Atrasada"
+          })))
+        } else {
+          console.error('Error fetching vaccinations:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchVaccinations()
+  }, [])
+
+  useEffect(() => {
+    const fetchAvailableTimeSlots = async () => {
+      if (!selectedDate) return
+      
+      try {
+        const response = await fetch(`/api/horarios?fecha=${selectedDate}`)
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableTimeSlots(data)
+        } else {
+          console.error('Error fetching time slots:', response.statusText)
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
+  
+    fetchAvailableTimeSlots()
+  }, [selectedDate])
 
   const getStatusColor = (status: Vaccination["status"]) => {
     switch (status) {
@@ -44,10 +98,47 @@ export function PendingVaccinations() {
     }
   }
 
-  const handleSchedule = (id: number) => {
-    // Here you would typically open a dialog to schedule the vaccination
-    // For now, we'll just log to the console
-    console.log(`Scheduling vaccination for id: ${id}`)
+  const handleSchedule = (vaccination: Vaccination) => {
+    setSelectedVaccination(vaccination)
+    setIsDialogOpen(true)
+  }
+
+  const createAppointment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedVaccination) return
+  
+    try {
+      const appointmentDateTime = `${selectedDate}T${selectedTime}`
+      const response = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          'user-id': localStorage.getItem('userId') || ''
+        },
+        body: JSON.stringify({
+          petId: Number(selectedVaccination.petId),
+          serviceId: "2",
+          dateTime: new Date(appointmentDateTime).toLocaleString('en-US'),
+          notes: `Vacunación - ${selectedVaccination.vaccineName}`
+        })
+      })
+  
+      if (response.ok) {
+        window.alert("La cita para vacunación ha sido programada exitosamente")
+        setIsDialogOpen(false)
+        const updatedVaccinations = vaccinations.filter(v => v.id !== selectedVaccination.id)
+        setVaccinations(updatedVaccinations)
+      } else {
+        window.alert("Error: No se pudo crear la cita")
+      }
+    } catch (error) {
+      console.error('Error creating appointment:', error)
+      window.alert("Error: Ocurrió un error al crear la cita")
+    }
+  }
+
+  if (isLoading) {
+    return <div>Cargando vacunas programadas...</div>
   }
 
   return (
@@ -63,30 +154,86 @@ export function PendingVaccinations() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {vaccinations.map((vaccination) => (
-            <TableRow key={vaccination.id}>
-              <TableCell>{vaccination.petName}</TableCell>
-              <TableCell>{vaccination.vaccineName}</TableCell>
-              <TableCell>{vaccination.dueDate}</TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(vaccination.status)}>
-                  {vaccination.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSchedule(vaccination.id)}
-                >
-                  Agendar
-                </Button>
+          {vaccinations.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center">
+                No hay vacunas programadas
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            vaccinations.map((vaccination) => (
+              <TableRow key={vaccination.id}>
+                <TableCell>{vaccination.petName}</TableCell>
+                <TableCell>{vaccination.vaccineName}</TableCell>
+                <TableCell>{vaccination.dueDate}</TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(vaccination.status)}>
+                    {vaccination.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSchedule(vaccination)}
+                  >
+                    Agendar
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agendar Vacunación</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={createAppointment} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="date">Fecha</Label>
+              <Input
+                id="date"
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="time">Hora</Label>
+              <Select 
+                value={selectedTime} 
+                onValueChange={setSelectedTime}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar horario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTimeSlots.map((slot: {Hora: string}) => (
+                    <SelectItem key={slot.Hora} value={slot.Hora}>
+                      {new Date(`2000-01-01T${slot.Hora}`).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Agendar</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-

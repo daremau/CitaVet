@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
+import { Trash2 } from 'lucide-react'
 
 type FinancialReport = {
   id: number
@@ -34,6 +35,7 @@ export function FinancialReports() {
   const [financialReports, setFinancialReports] = useState<FinancialReport[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   useEffect(() => {
     async function fetchReports() {
@@ -53,6 +55,32 @@ export function FinancialReports() {
 
     fetchReports()
   }, [])
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('¿Está seguro que desea eliminar este reporte?')) {
+      return
+    }
+
+    setDeletingId(id)
+    try {
+      const response = await fetch(`/api/reportes?id=${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setFinancialReports(reports => 
+          reports.filter(report => report.id !== id)
+        )
+      } else {
+        throw new Error('Error al eliminar el reporte')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al eliminar el reporte')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   if (isLoading) return <div>Cargando reportes...</div>
   if (error) return <div>Error: {error}</div>
@@ -80,6 +108,16 @@ export function FinancialReports() {
               <TableCell className="text-right">{report.ingresos.toLocaleString()} Gs.</TableCell>
               <TableCell className="text-right">{report.gastos.toLocaleString()} Gs.</TableCell>
               <TableCell className="text-right">{report.beneficios.toLocaleString()} Gs.</TableCell>
+              <TableCell>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(report.id)}
+                  disabled={deletingId === report.id}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

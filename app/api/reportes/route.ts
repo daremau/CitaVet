@@ -36,3 +36,27 @@ export async function POST(request: NextRequest) {
       )
     }
   }
+
+  export async function DELETE(request: NextRequest) {
+    try {
+      const { searchParams } = new URL(request.url)
+      const id = searchParams.get('id')
+  
+      if (!id) {
+        return new Response(
+          JSON.stringify({ message: 'ID requerido' }), 
+          { status: 400 }
+        )
+      }
+  
+      await pool.query('DELETE FROM reportes WHERE id = ?', [id])
+      
+      return new Response(null, { status: 204 })
+    } catch (error) {
+      console.error('Database error:', error)
+      return new Response(
+        JSON.stringify({ message: 'Error al eliminar reporte' }), 
+        { status: 500 }
+      )
+    }
+  }

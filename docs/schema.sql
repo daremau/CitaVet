@@ -369,7 +369,7 @@ CREATE TABLE `reportes` (
   `gastos` int NOT NULL,
   `beneficios` int GENERATED ALWAYS AS ((`ingresos` - `gastos`)) STORED,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -378,6 +378,7 @@ CREATE TABLE `reportes` (
 
 LOCK TABLES `reportes` WRITE;
 /*!40000 ALTER TABLE `reportes` DISABLE KEYS */;
+INSERT INTO `reportes` (`id`, `fecha`, `nombre`, `ingresos`, `gastos`) VALUES (1,'08/12/24-26/12/24','Reporte Productos',7725,5150);
 /*!40000 ALTER TABLE `reportes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -503,6 +504,35 @@ INSERT INTO `vacunas` VALUES (1,'Vacuna contra la rabia','Protección contra la 
 UNLOCK TABLES;
 
 --
+-- Table structure for table `vacunas_programadas`
+--
+
+DROP TABLE IF EXISTS `vacunas_programadas`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `vacunas_programadas` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_mascota` bigint unsigned NOT NULL,
+  `nombre_vacuna` varchar(100) NOT NULL,
+  `fecha_prevista` date NOT NULL,
+  `estado` enum('Pendiente','Próxima','Atrasada') NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_mascota` (`id_mascota`),
+  CONSTRAINT `vacunas_programadas_ibfk_1` FOREIGN KEY (`id_mascota`) REFERENCES `mascotas` (`IdMascota`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `vacunas_programadas`
+--
+
+LOCK TABLES `vacunas_programadas` WRITE;
+/*!40000 ALTER TABLE `vacunas_programadas` DISABLE KEYS */;
+INSERT INTO `vacunas_programadas` VALUES (1,4,'Rabia','2024-04-15','Pendiente'),(2,5,'Triple Felina','2024-03-30','Próxima'),(3,11,'Parvovirus','2024-03-10','Atrasada'),(4,12,'Leptospirosis','2024-05-01','Pendiente'),(5,13,'Hepatitis','2024-04-20','Pendiente');
+/*!40000 ALTER TABLE `vacunas_programadas` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `veterinarios`
 --
 
@@ -543,4 +573,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-12-13 11:04:23
+-- Dump completed on 2024-12-13 13:36:40
