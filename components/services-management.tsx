@@ -1,5 +1,5 @@
 "use client"
-
+import { format } from "date-fns"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
@@ -44,6 +44,9 @@ export function ServicesManagement() {
   })
   const [isEditServiceDialogOpen, setIsEditServiceDialogOpen] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
+  const [isGenerateReportDialogOpen, setIsGenerateReportDialogOpen] = useState(false)
+  const [startDate, setStartDate] = useState<string>("")
+  const [endDate, setEndDate] = useState<string>("")
 
   const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -139,6 +142,76 @@ export function ServicesManagement() {
     } catch (error) {
       console.error('Error:', error)
       alert('Error al actualizar el servicio')
+    }
+  }
+
+  const handleGenerateReport = async () => {
+    // 1. Validaciones iniciales
+    if (!startDate || !endDate) {
+      alert("Por favor seleccione ambas fechas")
+      return
+    }
+  
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+  
+    if (start > end) {
+      alert("La fecha de inicio debe ser anterior a la fecha final")
+      return
+    }
+  
+    try {
+      // 2. Obtener detalles de facturas en el rango de fechas
+      const response = await fetch(
+        `/api/detallefactura/servicio?startDate=${startDate}&endDate=${endDate}`
+      )
+  
+      if (!response.ok) {
+        throw new Error('Error al obtener datos de facturas')
+      }
+  
+      const detalles = await response.json()
+  
+      // 3. Calcular totales
+      let ingresos = 0
+      let gastos = 0 // En servicios, los gastos podrían ser un porcentaje fijo o 0
+  
+      detalles.forEach((detalle: any) => {
+        if (detalle.id_servicio) {
+          ingresos += Number(detalle.subtotal)
+        }
+      })
+  
+      // 4. Crear el reporte
+      const reporteData = {
+        fecha: `${format(start, 'dd/MM/yy')}-${format(end, 'dd/MM/yy')}`,
+        nombre: 'Reporte Servicios',
+        ingresos: Math.round(ingresos),
+        gastos: Math.round(gastos)
+      }
+  
+      // 5. Guardar el reporte
+      const saveResponse = await fetch('/api/reportes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reporteData)
+      })
+  
+      if (!saveResponse.ok) {
+        throw new Error('Error al guardar el reporte')
+      }
+  
+      // 6. Cerrar diálogo y mostrar confirmación
+      setIsGenerateReportDialogOpen(false)
+      setStartDate("")
+      setEndDate("")
+      alert('Reporte generado exitosamente')
+  
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al generar el reporte')
     }
   }
 
@@ -280,11 +353,11 @@ export function ServicesManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        <Button variant="outline" className="flex items-center gap-2">
-          <Edit className="h-4 w-4" />
-          Modificar servicios
-        </Button>
-        <Button variant="outline" className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          className="flex items-center gap-2"
+          onClick={() => setIsGenerateReportDialogOpen(true)}
+        >
           <FileText className="h-4 w-4" />
           Generar reporte
         </Button>
@@ -345,6 +418,47 @@ export function ServicesManagement() {
             </Button>
             <Button onClick={updateService}>
               Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isGenerateReportDialogOpen} onOpenChange={setIsGenerateReportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generar Reporte</DialogTitle>
+            <DialogDescription>
+              Seleccione el rango de fechas para el reporte.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="startDate" className="text-right">Fecha de inicio</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="endDate" className="text-right">Fecha de fin</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsGenerateReportDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleGenerateReport}>
+              Generar
             </Button>
           </DialogFooter>
         </DialogContent>
