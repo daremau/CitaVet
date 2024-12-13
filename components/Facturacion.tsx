@@ -92,7 +92,7 @@ export function ReceiptGenerator() {
         if (product && quantity > 0 && quantity <= product.Existencia) {
             const subtotal = product.PrecioVenta * quantity
             setSelectedItems([...selectedItems, {
-                id: Date.now(),
+                id: product.IdProducto,
                 type: 'product',
                 name: product.NombreProducto,
                 quantity,
@@ -139,25 +139,47 @@ export function ReceiptGenerator() {
             return
         }
 
-        const receiptData = {
+        const facturaData = {
+            numero: `F${Date.now()}`, // Generate unique invoice number
+            fecha: new Date().toISOString().split('T')[0],
             razon_social: clientName,
-            ruc,
-            items: selectedItems,
-            subtotal: calculateSubtotal(),
-            monto_total: calculateTotal(),
-            fecha: new Date().toISOString().split('T')[0]
+            ruc: ruc,
+            monto_total: calculateTotal()
         }
 
         try {
-            const response = await fetch('/api/factura', {
+            const facturaResponse = await fetch('/api/factura', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(receiptData)
+                body: JSON.stringify(facturaData)
             })
 
-            if (response.ok) {
+            if (facturaResponse.ok) {
+                const { id: facturaId } = await facturaResponse.json()
+
+                const detallesPromises = selectedItems.map(item => {
+                    const detalleData = {
+                        id_factura: facturaId,
+                        tipo_pago: 'Efectivo',
+                        id_producto: item.type === 'product' ? item.id : null,
+                        id_servicio: item.type === 'service' ? item.id : null,
+                        cantidad: item.quantity,
+                        subtotal: item.subtotal
+                    }
+
+                    return fetch('/api/detallefactura', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(detalleData)
+                    })
+                })
+
+                await Promise.all(detallesPromises)
+
                 alert("Factura generada exitosamente")
                 setSelectedItems([])
                 setClientName("")
