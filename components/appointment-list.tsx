@@ -105,6 +105,29 @@ export function AppointmentList() {
     console.log(`Reschedule appointment ${id}`)
   }
 
+  const handleComplete = async (id: number) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH', 
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': localStorage.getItem('userId') || ''
+        },
+        body: JSON.stringify({ status: 'Completado' })
+      })
+  
+      if (response.ok) {
+        // Remove completed appointment from list since we filter them out
+        setAppointments(appointments.filter(app => app.id !== id))
+      } else {
+        console.error('Error completing appointment:', response.statusText)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
+  }
+  
+
   const filteredAppointments = appointments.filter(app => {
     if (!filter) return true
     switch (filterType) {
@@ -167,7 +190,14 @@ export function AppointmentList() {
                     onClick={() => handleConfirm(appointment.id)}
                     disabled={appointment.status === "Confirmada"}
                     size="sm">
-                  Confirmar
+                    Confirmar
+                  </Button>
+                  <Button 
+                    onClick={() => handleComplete(appointment.id)}
+                    disabled={appointment.status !== "Confirmada"} 
+                    variant="secondary"
+                    size="sm">
+                    Completar
                   </Button>
                   <Button onClick={() => handleReschedule(appointment.id)} variant="outline" size="sm">
                     Reprogramar
