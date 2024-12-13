@@ -31,6 +31,7 @@ type Vaccine = {
   Fabricante: string
   FechaVencimiento: string
   Existencia: number
+  Precio: number  
 }
 
 export function VaccinesManagement() {
@@ -217,7 +218,8 @@ export function VaccinesManagement() {
                       description: newVaccine.description,
                       manufacturer: newVaccine.manufacturer,
                       expirationDate: newVaccine.expirationDate,
-                      stock: newVaccine.stock
+                      stock: newVaccine.stock,
+                      price: newVaccine.price
                     })
                   });
             
@@ -229,7 +231,8 @@ export function VaccinesManagement() {
                       Descripcion: newVaccine.description,
                       Fabricante: newVaccine.manufacturer,
                       FechaVencimiento: newVaccine.expirationDate,
-                      Existencia: newVaccine.stock
+                      Existencia: newVaccine.stock,
+                      Precio: newVaccine.price
                     };
                     setVaccines([...vaccines, formattedVaccine]);
                     setIsAddVaccineDialogOpen(false);
@@ -276,7 +279,8 @@ export function VaccinesManagement() {
                       description: updatedVaccine.Descripcion,
                       manufacturer: updatedVaccine.Fabricante,
                       expirationDate: updatedVaccine.FechaVencimiento,
-                      stock: updatedVaccine.Existencia
+                      stock: updatedVaccine.Existencia,
+                      price: updatedVaccine.Precio
                     })
                   });
 

@@ -10,6 +10,7 @@ type Vaccine = {
   Fabricante: string
   FechaVencimiento: string
   Existencia: number
+  Precio: number
 }
 
 type EditVaccineFormProps = {

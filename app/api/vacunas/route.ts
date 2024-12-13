@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
                 Fabricante,
                 FechaVencimiento,
                 Existencia
+                Precio
             FROM 
                 Vacunas;
         `);
@@ -32,7 +33,8 @@ export async function POST(request: NextRequest) {
                 Fabricante, 
                 FechaVencimiento, 
                 Existencia
-            ) VALUES (?, ?, ?, ?, ?)`,
+                Precio
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
             [
                 vaccine.name,
                 vaccine.description,
@@ -67,7 +69,8 @@ export async function PUT(request: NextRequest) {
                  Descripcion = ?, 
                  Fabricante = ?, 
                  FechaVencimiento = ?, 
-                 Existencia = ?
+                 Existencia = ?,
+                 Precio = ?
              WHERE IdVacuna = ?`,
             [
                 vaccine.name,
