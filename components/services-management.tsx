@@ -42,6 +42,8 @@ export function ServicesManagement() {
     description: "",
     price: 0
   })
+  const [isEditServiceDialogOpen, setIsEditServiceDialogOpen] = useState(false)
+  const [editingService, setEditingService] = useState<Service | null>(null)
 
   const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,6 +110,38 @@ export function ServicesManagement() {
     }
   }
 
+  const handleEdit = (service: Service) => {
+    setEditingService(service)
+    setIsEditServiceDialogOpen(true)
+  }
+
+  const updateService = async () => {
+    if (!editingService) return
+  
+    try {
+      const response = await fetch(`/api/servicios/${editingService.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editingService)
+      })
+  
+      if (response.ok) {
+        setServices(services.map(service => 
+          service.id === editingService.id ? editingService : service
+        ))
+        setIsEditServiceDialogOpen(false)
+        setEditingService(null)
+      } else {
+        throw new Error('Error al actualizar el servicio')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error al actualizar el servicio')
+    }
+  }
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -116,12 +150,11 @@ export function ServicesManagement() {
         if (!response.ok) throw new Error('Error al cargar servicios')
         
         const data = await response.json()
-        // Map API response to match Service type
         const mappedServices = data.map((service: any) => ({
           id: service.id,
           name: service.name,
           description: service.Descripcion,
-          price: Number(service.Precio) || 0 // Ensure price is a number
+          price: Number(service.Precio) || 0
         }))
         
         setServices(mappedServices)
@@ -175,7 +208,11 @@ export function ServicesManagement() {
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEdit(service)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button 
@@ -252,6 +289,66 @@ export function ServicesManagement() {
           Generar reporte
         </Button>
       </div>
+
+      <Dialog open={isEditServiceDialogOpen} onOpenChange={setIsEditServiceDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Servicio</DialogTitle>
+            <DialogDescription>
+              Modifique los detalles del servicio a continuación.
+            </DialogDescription>
+          </DialogHeader>
+          {editingService && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editServiceName" className="text-right">Nombre</Label>
+                <Input
+                  id="editServiceName"
+                  value={editingService.name}
+                  onChange={(e) => setEditingService({
+                    ...editingService,
+                    name: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editServiceDescription" className="text-right">Descripción</Label>
+                <Input
+                  id="editServiceDescription"
+                  value={editingService.description}
+                  onChange={(e) => setEditingService({
+                    ...editingService,
+                    description: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editServicePrice" className="text-right">Precio</Label>
+                <Input
+                  id="editServicePrice"
+                  type="number"
+                  value={editingService.price}
+                  onChange={(e) => setEditingService({
+                    ...editingService,
+                    price: Number(e.target.value)
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditServiceDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={updateService}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
