@@ -10,6 +10,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 
 
 type NewProduct = {
+  IdProducto?: number
   nombreProducto: string
   tipo: 'Alimento' | 'Juguete' | 'Accesorio' | 'Higiene' | 'Medicamento' | 'Otro'
   descripcion: string
@@ -21,32 +22,43 @@ type NewProduct = {
 }
 
 type NewProductFormProps = {
+  editMode?: boolean
+  initialProduct?: NewProduct
   onSubmit: (product: NewProduct) => void
   onCancel: () => void
 }
 
-export function NewProductForm({ onSubmit, onCancel }: NewProductFormProps) {
-  const [newProduct, setNewProduct] = useState<NewProduct>({
-    nombreProducto: "",
-    tipo: "Otro",
-    descripcion: "",
-    precioCompra: 0,
-    precioVenta: 0,
-    stock: 0,
-    descuento: 0,
-    proveedor: ""
-  })
+export function NewProductForm({ editMode = false, initialProduct, onSubmit, onCancel }: NewProductFormProps) {
+  const [newProduct, setNewProduct] = useState<NewProduct>(
+    initialProduct || {
+      nombreProducto: "",
+      tipo: "Otro",
+      descripcion: "",
+      precioCompra: 0,
+      precioVenta: 0,
+      stock: 0,
+      descuento: 0,
+      proveedor: ""
+    }
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     try {
-      const response = await fetch('/api/producto', {
-        method: 'POST',
+      const endpoint = editMode && initialProduct?.IdProducto 
+        ? `/api/producto/${initialProduct.IdProducto}` 
+        : '/api/producto'
+  
+      const response = await fetch(endpoint, {
+        method: editMode ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newProduct)
+        body: JSON.stringify({
+          ...newProduct,
+          IdProducto: initialProduct?.IdProducto // Include IdProducto for updates
+        })
       })
   
       if (response.ok) {
@@ -85,9 +97,12 @@ export function NewProductForm({ onSubmit, onCancel }: NewProductFormProps) {
 
         <div className="space-y-2">
           <Label htmlFor="tipo">Tipo</Label>
-          <Select onValueChange={(value) => setNewProduct({ ...newProduct, tipo: value as NewProduct['tipo'] })}>
+          <Select
+            value={newProduct.tipo}
+            onValueChange={(value) => setNewProduct({ ...newProduct, tipo: value as NewProduct['tipo'] })}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Seleccione un tipo" />
+              <SelectValue placeholder="Seleccionar tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Alimento">Alimento</SelectItem>
@@ -166,7 +181,9 @@ export function NewProductForm({ onSubmit, onCancel }: NewProductFormProps) {
           />
         </div>
 
-        <Button type="submit" className="w-full">Guardar Producto</Button>
+        <Button type="submit" className="w-full">
+          {editMode ? 'Actualizar Producto' : 'Guardar Producto'}
+        </Button>
       </form>
     </div>
   )

@@ -24,18 +24,19 @@ import { NewProductForm } from "./NuevoProducto"
 interface Product {
   IdProducto: string
   NombreProducto: string 
-  TipoProducto: string
+  Tipo: "Alimento" | "Juguete" | "Accesorio" | "Higiene" | "Medicamento" | "Otro"
   Descripcion: string
   PrecioCompra: number
   PrecioVenta: number
   Descuento: number
-  Stock: number
+  Proveedor: string
+  Existencia: number
   FechaIngreso: string
 }
 
 export interface NewProduct {
   nombreProducto: string
-  tipo: string
+  tipo: "Alimento" | "Juguete" | "Accesorio" | "Higiene" | "Medicamento" | "Otro"
   descripcion: string
   precioCompra: number
   precioVenta: number
@@ -52,12 +53,14 @@ export function InventoryManagement() {
   const [error, setError] = useState<string | null>(null)
   const [isAddProductDialogOpen, setIsAddProductDialogOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isEditProductDialogOpen, setIsEditProductDialogOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const totalInventoryValue = products.reduce((sum, item) => 
-    sum + (item.PrecioCompra * item.Stock), 0
+    sum + (item.PrecioCompra * item.Existencia), 0
   )
 
   const totalInventorySaleValue = products.reduce((sum, item) => 
-    sum + (item.PrecioVenta * item.Stock), 0
+    sum + (item.PrecioVenta * item.Existencia), 0
   )
 
   const toggleInventorySort = () => {
@@ -67,6 +70,35 @@ export function InventoryManagement() {
   const handleAddProduct = (newProduct: Product) => {
     setProducts([...products, newProduct])
     setIsAddProductDialogOpen(false)
+  }
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product)
+    setIsEditProductDialogOpen(true)
+  }
+
+  const handleUpdateProduct = async (updatedProduct: Product) => {
+    try {
+      const response = await fetch(`/api/producto/${updatedProduct.IdProducto}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedProduct)
+      })
+  
+      if (response.ok) {
+        setProducts(products.map(product => 
+          product.IdProducto === updatedProduct.IdProducto ? updatedProduct : product
+        ))
+        setIsEditProductDialogOpen(false)
+        setEditingProduct(null)
+      } else {
+        throw new Error('Error al actualizar el producto')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    }
   }
 
   useEffect(() => {
@@ -162,6 +194,7 @@ const handleDelete = async (productId: string) => {
             <TableRow>
               <TableHead>Código</TableHead>
               <TableHead>Nombre</TableHead>
+              <TableHead>Tipo</TableHead> 
               <TableHead className="text-right">Precio Venta</TableHead>
               <TableHead className="text-right">Precio Compra</TableHead>
               <TableHead className="text-right">
@@ -175,7 +208,7 @@ const handleDelete = async (productId: string) => {
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>Marca</TableHead>
+              <TableHead>Proveedor</TableHead>
               <TableHead className="text-right">Descuento</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
@@ -183,30 +216,28 @@ const handleDelete = async (productId: string) => {
           </TableHeader>
           <TableBody>
             {filteredProducts.map((product) => (
-                <TableRow key={product.IdProducto}>
-                  <TableCell>{product.IdProducto}</TableCell>
-                  <TableCell>{product.NombreProducto}</TableCell>
-                  <TableCell>{product.TipoProducto}</TableCell>
-                  <TableCell className="text-right">{product.PrecioCompra.toLocaleString()} Gs.</TableCell>
-                  <TableCell className="text-right">{product.PrecioVenta.toLocaleString()} Gs.</TableCell>
-                  <TableCell className="text-right">{product.Stock}</TableCell>
-                  <TableCell className="text-right">{product.Descuento}%</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
-                        Editar
-                      </Button>
-                      <Button 
-                        variant="destructive" size="sm"
-                        onClick={() => handleDelete(product.IdProducto)}
-                        disabled={deletingId === product.IdProducto}
-                      >
-                        Eliminar
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+              <TableRow key={product.IdProducto}>
+                <TableCell>{product.IdProducto}</TableCell>
+                <TableCell>{product.NombreProducto}</TableCell>
+                <TableCell>{product.Tipo || 'No especificado'}</TableCell>
+                <TableCell className="text-right">{product.PrecioVenta.toLocaleString()} Gs.</TableCell>
+                <TableCell className="text-right">{product.PrecioCompra.toLocaleString()} Gs.</TableCell>
+                <TableCell className="text-right">{product.Existencia || 0}</TableCell>
+                <TableCell>{product.Proveedor || 'No especificado'}</TableCell>
+                <TableCell className="text-right">{product.Descuento}%</TableCell>
+                <TableCell>{product.Descripcion}</TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(product.IdProducto)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -250,6 +281,31 @@ const handleDelete = async (productId: string) => {
           </Button>
         </div>
       </div>
+      {editingProduct && (
+        <Dialog open={isEditProductDialogOpen} onOpenChange={setIsEditProductDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Editar Producto</DialogTitle>
+            </DialogHeader>
+            <NewProductForm
+              editMode={true}
+              initialProduct={{
+                IdProducto: editingProduct.IdProducto,
+                nombreProducto: editingProduct.NombreProducto,
+                tipo: editingProduct.Tipo,
+                descripcion: editingProduct.Descripcion,
+                precioCompra: editingProduct.PrecioCompra,
+                precioVenta: editingProduct.PrecioVenta,
+                stock: editingProduct.Existencia,
+                descuento: editingProduct.Descuento,
+                proveedor: editingProduct.Proveedor || ""
+              }}
+              onSubmit={handleUpdateProduct}
+              onCancel={() => setIsEditProductDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

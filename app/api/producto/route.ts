@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const [productos] = await pool.query(
-      'SELECT IdProducto, NombreProducto, Tipo, Descripcion, PrecioCompra, PrecioVenta, Descuento, Proveedor Existencia, FechaIngreso FROM productos'
+      'SELECT IdProducto, NombreProducto, Tipo, Descripcion, PrecioCompra, PrecioVenta, Descuento, Proveedor, Existencia FROM productos'
     );
 
     return new Response(JSON.stringify(productos), { status: 200 });
@@ -27,9 +27,8 @@ export async function POST(request: NextRequest) {
         PrecioVenta, 
         Existencia, 
         Descuento, 
-        Proveedor,
-        FechaIngreso
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+        Proveedor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?`,
       [
         product.nombreProducto,
         product.tipo,
