@@ -33,10 +33,6 @@ interface Appointment {
   notes: string;
 }
 
-interface NuevaCitaProps {
-  appointment?: Appointment;
-}
-
 export function NuevaCita() {
   const [open, setOpen] = useState(false)
 

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table"
 import { NuevaCita } from "./NuevaCita"
 import { Button } from "@/components/ui/button"
+import { EditAppointmentDialog } from "./EditarCita"
 
 type Appointment = {
   id: number
@@ -25,6 +26,8 @@ type Appointment = {
 export function GestionCitas() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeTab, setActiveTab] = useState("pending");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -56,6 +59,38 @@ export function GestionCitas() {
 
     fetchAppointments();
   }, []);
+
+  const handleEdit = (appointment: Appointment) => {
+    setEditingAppointment(appointment);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateAppointment = async (id: number, newDate: string, newTime: string) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'user-id': localStorage.getItem('userId') || ''
+        },
+        body: JSON.stringify({ 
+          dateTime: `${newDate}T${newTime}` 
+        })
+      });
+  
+      if (response.ok) {
+        setAppointments(appointments.map(app => 
+          app.id === id 
+            ? { ...app, date: newDate, time: newTime }
+            : app
+        ));
+      } else {
+        console.error('Error al actualizar la cita');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
   const handleCancel = async (appointmentId: number) => {
     try {
@@ -121,7 +156,11 @@ export function GestionCitas() {
                <TableCell>{appointment.status}</TableCell>
                <TableCell>
                  <div className="flex space-x-2">
-                   <Button variant="outline" size="sm" >
+                   <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleEdit(appointment)}
+                      >
                       Editar
                     </Button>
                    <Button variant="destructive" size="sm" onClick={() => handleCancel(appointment.id)}>
@@ -174,8 +213,17 @@ export function GestionCitas() {
           </Table>
         </TabsContent>
       </Tabs>
+      {editingAppointment && (
+        <EditAppointmentDialog
+          appointment={editingAppointment}
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false);
+            setEditingAppointment(null);
+          }}
+          onSave={handleUpdateAppointment}
+        />
+      )}
     </div>
   )
 }
-
-
