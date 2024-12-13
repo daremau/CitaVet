@@ -272,10 +272,6 @@ const handleDelete = async (productId: string) => {
             </DialogContent>
           </Dialog>
           <Button variant="outline" className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
-            Modificar productos
-          </Button>
-          <Button variant="outline" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Generar reporte
           </Button>

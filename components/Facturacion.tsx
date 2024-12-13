@@ -83,7 +83,7 @@ export function ReceiptGenerator() {
             })
             .catch(error => {
                 console.error('Error loading services:', error);
-                setServices([]); // Set empty array on error
+                setServices([]);
             });
     }, []);
 

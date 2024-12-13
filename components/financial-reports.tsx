@@ -19,15 +19,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { CalendarIcon } from 'lucide-react'
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 
 type FinancialReport = {
   id: number
@@ -92,23 +84,10 @@ export function FinancialReports() {
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
 
-  const handleGenerateReport = () => {
-    if (startDate && endDate) {
-      console.log(`Generando reporte desde ${format(startDate, 'dd/MM/yyyy')} hasta ${format(endDate, 'dd/MM/yyyy')}`)
-      // Aquí iría la lógica real para generar el reporte
-      setIsGenerateReportDialogOpen(false)
-    } else {
-      alert("Por favor seleccione ambas fechas")
-    }
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Reportes Financieros</h2>
-        <Button onClick={() => setIsGenerateReportDialogOpen(true)}>
-          Generar Reporte
-        </Button>
       </div>
       <Table>
         <TableHeader>
@@ -164,77 +143,6 @@ export function FinancialReports() {
           ))}
         </TableBody>
       </Table>
-      <Dialog open={isGenerateReportDialogOpen} onOpenChange={setIsGenerateReportDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generar Reporte Financiero</DialogTitle>
-            <DialogDescription>
-              Seleccione el rango de fechas para generar el reporte.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="startDate" className="text-right">
-                Fecha Inicial
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="startDate"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[240px] justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : <span>Seleccionar fecha</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <label htmlFor="endDate" className="text-right">
-                Fecha Final
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="endDate"
-                    variant={"outline"}
-                    className={cn(
-                      "w-[240px] justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : <span>Seleccionar fecha</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleGenerateReport}>Generar Reporte</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
