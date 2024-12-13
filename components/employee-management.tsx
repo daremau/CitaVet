@@ -42,6 +42,13 @@ export function EmployeeManagement() {
     address: "",
     phone: ""
   })
+  const [isEditEmployeeDialogOpen, setIsEditEmployeeDialogOpen] = useState(false)
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
+
+  const handleEdit = (employee: Employee) => {
+    setEditingEmployee(employee)
+    setIsEditEmployeeDialogOpen(true)
+  }
 
   const addEmployee = async () => {
     if (newEmployee.name && newEmployee.role && newEmployee.username && newEmployee.password) {
@@ -115,6 +122,40 @@ export function EmployeeManagement() {
       } catch (error) {
         console.error('Error:', error);
       }
+    }
+  }
+
+  const updateEmployee = async () => {
+    if (!editingEmployee) return
+  
+    try {
+      const response = await fetch(`/api/usuarios/${editingEmployee.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editingEmployee.name,
+          username: editingEmployee.username,
+          role: editingEmployee.role,
+          email: editingEmployee.email,
+          address: editingEmployee.address,
+          phone: editingEmployee.phone
+        }),
+      })
+  
+      if (response.ok) {
+        // Actualizar la lista de empleados
+        setEmployees(employees.map(emp => 
+          emp.id === editingEmployee.id ? editingEmployee : emp
+        ))
+        setIsEditEmployeeDialogOpen(false)
+        setEditingEmployee(null)
+      } else {
+        console.error('Error al actualizar empleado')
+      }
+    } catch (error) {
+      console.error('Error:', error)
     }
   }
 
@@ -295,7 +336,11 @@ export function EmployeeManagement() {
               <TableCell>{employee.username}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  <Button variant="ghost" size="icon">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleEdit(employee)}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button 
@@ -311,6 +356,119 @@ export function EmployeeManagement() {
           ))}
         </TableBody>
       </Table>
+      <Dialog open={isEditEmployeeDialogOpen} onOpenChange={setIsEditEmployeeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Empleado</DialogTitle>
+          </DialogHeader>
+          {editingEmployee && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeeName" className="text-right">
+                  Nombre
+                </Label>
+                <Input
+                  id="editEmployeeName"
+                  value={editingEmployee.name}
+                  onChange={(e) => setEditingEmployee({
+                    ...editingEmployee,
+                    name: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeeUsername" className="text-right">
+                  Nombre de Usuario
+                </Label>
+                <Input
+                  id="editEmployeeUsername"
+                  value={editingEmployee.username}
+                  onChange={(e) => setEditingEmployee({
+                    ...editingEmployee,
+                    username: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeeRole" className="text-right">
+                  Rol
+                </Label>
+                <Select
+                  value={editingEmployee.role}
+                  onValueChange={(value) => setEditingEmployee({
+                    ...editingEmployee,
+                    role: value
+                  })}
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Recepcionista">Recepcionista</SelectItem>
+                    <SelectItem value="Cliente">Cliente</SelectItem>
+                    <SelectItem value="Veterinario">Veterinario</SelectItem>
+                    <SelectItem value="PersonalDelivery">Personal Delivery</SelectItem>
+                    <SelectItem value="Administrador">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeeEmail" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="editEmployeeEmail"
+                  type="email"
+                  value={editingEmployee.email}
+                  onChange={(e) => setEditingEmployee({
+                    ...editingEmployee,
+                    email: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeeAddress" className="text-right">
+                  Dirección
+                </Label>
+                <Input
+                  id="editEmployeeAddress"
+                  value={editingEmployee.address}
+                  onChange={(e) => setEditingEmployee({
+                    ...editingEmployee,
+                    address: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="editEmployeePhone" className="text-right">
+                  Teléfono
+                </Label>
+                <Input
+                  id="editEmployeePhone"
+                  value={editingEmployee.phone}
+                  onChange={(e) => setEditingEmployee({
+                    ...editingEmployee,
+                    phone: e.target.value
+                  })}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditEmployeeDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={updateEmployee}>
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
