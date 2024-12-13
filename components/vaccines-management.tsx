@@ -128,17 +128,8 @@ export function VaccinesManagement() {
               <TableHead>Nombre</TableHead>
               <TableHead>Descripción</TableHead>
               <TableHead>Fabricante</TableHead>
-              <TableHead className="text-right">
-                Stock
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2 h-8 w-8 p-0"
-                  onClick={toggleSort}
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
+              <TableHead className="text-right">Stock</TableHead>
+              <TableHead className="text-right">Precio</TableHead>
               <TableHead>Fecha de Vencimiento</TableHead>
               <TableHead className="w-[100px]">Acciones</TableHead>
             </TableRow>
@@ -164,6 +155,7 @@ export function VaccinesManagement() {
                   <TableCell>{vaccine.Descripcion}</TableCell>
                   <TableCell>{vaccine.Fabricante}</TableCell>
                   <TableCell className="text-right">{vaccine.Existencia}</TableCell>
+                  <TableCell className="text-right">{vaccine.Precio.toLocaleString()} Gs.</TableCell>
                   <TableCell>{new Date(vaccine.FechaVencimiento).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">

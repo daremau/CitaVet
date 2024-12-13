@@ -68,6 +68,16 @@ export function EditVaccineForm({ vaccine, onSubmit, onCancel }: EditVaccineForm
           />
         </div>
         <div className="space-y-2">
+          <Label htmlFor="vaccinePrice">Precio</Label>
+          <Input
+            id="vaccinePrice"
+            type="number"
+            value={editedVaccine.Precio}
+            onChange={(e) => setEditedVaccine({ ...editedVaccine, Precio: Number(e.target.value) })}
+            required
+          />
+        </div>
+        <div className="space-y-2">
           <Label htmlFor="vaccineExpirationDate">Fecha de Vencimiento</Label>
           <Input
             id="vaccineExpirationDate"

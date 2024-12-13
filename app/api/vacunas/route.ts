@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
                 Descripcion,
                 Fabricante,
                 FechaVencimiento,
-                Existencia
+                Existencia,
                 Precio
             FROM 
                 Vacunas;
@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
                 vaccine.description,
                 vaccine.manufacturer,
                 vaccine.expirationDate,
-                vaccine.stock
+                vaccine.stock,
+                vaccine.price
             ]
         );
 
@@ -76,8 +77,9 @@ export async function PUT(request: NextRequest) {
                 vaccine.name,
                 vaccine.description,
                 vaccine.manufacturer,
-                formattedDate, // Use formatted date
+                formattedDate,
                 vaccine.stock,
+                vaccine.price,
                 id
             ]
         );
